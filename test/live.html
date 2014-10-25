@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Live</title>
+    <script type="text/javascript" src="../src/barcode.js"></script>
+    <script type="text/javascript" src="../src/ean13.js"></script>
+    <script type="text/javascript" src="../src/capture.js"></script>
+
+  </head>
+  <body>
+    <input type="button" id="start" value="Start"/>
+    <input type="button" id="stop" value="Stop"/>
+    <table>
+      <tr>
+        <td><strong>Threshold</strong></td>
+        <td><label><input type="text" maxwidth="3" disabled="disabled" style="width: 50px" id="threshold"/></td>
+      </tr>
+    </table>
+    <canvas id="canvas"></canvas>
+    <video id="video"></video>
+  </body>
+
+  <script type="text/javascript">
+
+    var capture_video = new barcode.capture({
+      'source': document.getElementById('video'),
+      'interval': 100, // ms
+      // 'threshold': 220,
+      'symbology': 'ean13'
+    });
+
+    document.getElementById('start').addEventListener('click', function() {
+      capture_video.start();
+    });
+
+    document.getElementById('stop').addEventListener('click', function() {
+      capture_video.stop();
+    });
+
+    setInterval(
+      function() {
+        // console.log(capture_video.get_threshold());
+        document.getElementById('threshold').value = capture_video.get_threshold();
+      },
+      50
+    );
+
+
+    if(true) {
+      var canvas = document.getElementById('canvas');
+      canvas.style.border = "1px solid blue";
+      var context = canvas.getContext('2d');
+      var image = new Image();
+      // image.src = 'img/test1.png';
+      image.src = 'img/ean13.svg';
+      image.onload = function(){
+        canvas.width = image.width;
+        canvas.height = image.height;
+
+        context.drawImage(image, 0, 0);
+
+        // console.log(image.height);
+        // console.log(image.width);
+
+        // canvas.setAttribute('width', image.width);
+        // canvas.setAttribute('height', image.height);
+
+        var capture_canvas = new barcode.capture({
+          'source': canvas,
+          'threshold': 220,
+          'symbology': 'ean13'
+        });
+
+        capture_canvas.start();
+      };
+
+    }
+
+    var streaming = false,
+        video        = document.querySelector('#video'),
+        width = 640,
+        height = 0;
+
+    navigator.getMedia = ( navigator.getUserMedia ||
+                           navigator.webkitGetUserMedia ||
+                           navigator.mozGetUserMedia ||
+                           navigator.msGetUserMedia);
+
+    navigator.getMedia(
+      {
+        video: true,
+        audio: false
+      },
+      function(stream) {
+        if (navigator.mozGetUserMedia) {
+          video.mozSrcObject = stream;
+        } else {
+          var vendorURL = window.URL || window.webkitURL;
+          video.src = vendorURL.createObjectURL(stream);
+        }
+        video.play();
+      },
+      function(err) {
+        console.log("An error occured! " + err);
+      }
+    );
+
+    video.addEventListener('canplay', function(ev){
+      if (!streaming) {
+        height = video.videoHeight / (video.videoWidth/width);
+        video.setAttribute('width', width);
+        video.setAttribute('height', height);
+        streaming = true;
+
+
+        // capture_video.start();
+      }
+    }, false);
+
+    // function takepicture() {
+      // canvas.width = width;
+      // canvas.height = height;
+      // canvas.getContext('2d').drawImage(video, 0, 0, width, height);
+      // var data = canvas.toDataURL('image/png');
+      // photo.setAttribute('src', data);
+    // }
+
+    // setInterval(takepicture, 100);
+    // new barcode.capture(document.getElementById('canvas'));
+
+    // startbutton.addEventListener('click', function(ev){
+    //     takepicture();
+    //   ev.preventDefault();
+    // }, false);
+
+
+
+
+
+    // var ean13 = new barcode.ean13({
+    //   'data': '210987654321',
+    //   'background_color': '#ffffff',
+    //   'foreground_color': '#000000',
+    //   'bar_width': 2,
+    //   'bar_height': 100
+    // });
+    // ean13.render(document.getElementById('test'));
+
+/*    var canvas = document.getElementById('test');
+    canvas.height = 300;
+    canvas.width = 400;
+    var context = canvas.getContext('2d');
+    var image = new Image();
+    image.onload = function () {
+        context.drawImage(image, 0, 0);
+        //draw a box over the top
+        // context.fillStyle = "rgba(200, 0, 0, 0.5)";
+        // context.fillRect(0, 0, canvas.width, canvas.height);
+
+    };
+
+    image.src = 'img/ean13_a.jpg';
+
+    setTimeout(function() {
+      new barcode.capture(canvas);
+    }, 300);*/
+  </script>
+
+</html>

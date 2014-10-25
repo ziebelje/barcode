@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Barcode</title>
+    <script type="text/javascript" src="../src/barcode.js"></script>
+    <script type="text/javascript" src="../src/ean13.js"></script>
+    <script type="text/javascript" src="../src/capture.js"></script>
+
+  </head>
+  <body>
+    <canvas id="canvas"></canvas><br/>
+    <canvas id="debug_canvas"></canvas>
+  </body>
+
+  <script type="text/javascript">
+    new barcode.capture(document.getElementById('canvas'));
+
+
+    // var ean13 = new barcode.ean13({
+    //   'data': '210987654321',
+    //   'background_color': '#ffffff',
+    //   'foreground_color': '#000000',
+    //   'bar_width': 2,
+    //   'bar_height': 100
+    // });
+    // ean13.render(document.getElementById('test'));
+
+/*    var canvas = document.getElementById('test');
+    canvas.height = 300;
+    canvas.width = 400;
+    var context = canvas.getContext('2d');
+    var image = new Image();
+    image.onload = function () {
+        context.drawImage(image, 0, 0);
+        //draw a box over the top
+        // context.fillStyle = "rgba(200, 0, 0, 0.5)";
+        // context.fillRect(0, 0, canvas.width, canvas.height);
+
+    };
+
+    image.src = 'img/ean13_a.jpg';
+
+    setTimeout(function() {
+      new barcode.capture(canvas);
+    }, 300);*/
+  </script>
+
+</html>
