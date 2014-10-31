@@ -23,7 +23,7 @@ barcode.inherits(barcode.ean13, barcode);
  *
  * @type {RegExp}
  */
-barcode.ean13.prototype.regex_ = /\d{12}/;
+barcode.ean13.regex_ = /\d{12}/;
 
 
 /**
@@ -33,7 +33,7 @@ barcode.ean13.prototype.regex_ = /\d{12}/;
  *
  * @type {{1a: Object.<string, Array.<number>>, 1b: Array.<Object.<string, Array.<number>>>, 2: Object.<string, Array.<number>>}}
  */
-barcode.ean13.prototype.encoding_ = {
+barcode.ean13.encoding_ = {
   '1a': { // The first number of part 1 is encoded using this table.
     '0': [0, 0, 0, 0, 0, 0],
     '1': [0, 0, 1, 0, 1, 1],
@@ -87,16 +87,21 @@ barcode.ean13.prototype.encoding_ = {
 };
 
 
+barcode.ean13.start = [1, 0, 1];
+barcode.ean13.intermediate = [0, 1, 0, 1, 0];
+barcode.ean13.stop = [1, 0, 1];
+barcode.ean13.length = 95; // in bytes
+
 /**
  * Encode the data.
  *
  * @return {!Array.<number>}
  */
-barcode.ean13.prototype.encode = function() {
+barcode.ean13.encode = function() {
   // Hardcoded segments
-  var start = [1, 0, 1];
-  var intermediate = [0, 1, 0, 1, 0];
-  var stop = [1, 0, 1];
+  var start = barcode.ean13.start;
+  var intermediate = barcode.ean13.intermediate;
+  var stop = barcode.ean13.stop;
 
   // Grab the data we're going to encode.
   var data = this.data_;
@@ -130,9 +135,109 @@ barcode.ean13.prototype.encode = function() {
 
 
 /**
+ */
+barcode.ean13.decode = function(encoded) {
+  // console.log(encoded);
+  // debugger;
+  var compare = function(a, b) {
+    return a.join() === b.join();
+
+    // if(a.length !== b.length) {
+    //   return false;
+    // }
+    // for(var i = 0; i < a.length; ++i) {
+    //   if(a[i] !== b[i]) {
+    //     return false;
+    //   }
+    // }
+    // return true;
+  }
+
+  var decode_digit = function(encoded_digit, encoding) {
+    for(var i = 0; i < encoding.length; ++i) {
+
+    }
+  }
+
+  var start = encoded.splice(0, 3);
+  // console.log(start);
+
+  var decoded = [];
+
+  for(var i = 0; i < 6; ++i) {
+    var encoded_digit = encoded.splice(0, 7);
+    for(var digit in barcode.ean13.encoding_['1b'][0]) {
+      if(compare(encoded_digit, barcode.ean13.encoding_['1b'][0][digit]) === true) {
+        decoded.push(digit);
+        continue;
+      }
+    }
+    for(var digit in barcode.ean13.encoding_['1b'][1]) {
+      if(compare(encoded_digit, barcode.ean13.encoding_['1b'][1][digit]) === true) {
+        decoded.push(digit);
+        continue;
+      }
+    }
+    // console.log(encoded_digit);
+  }
+
+  var intermediate = encoded.splice(0, 5);
+  // console.log(intermediate);
+
+  for(var i = 0; i < 6; ++i) {
+    var encoded_digit = encoded.splice(0, 7);
+    for(var digit in barcode.ean13.encoding_['2']) {
+      if(compare(encoded_digit, barcode.ean13.encoding_['2'][digit]) === true) {
+        decoded.push(digit);
+        continue;
+      }
+    }
+    // console.log(encoded_digit);
+  }
+
+  var stop = encoded.splice(0, 3);
+  // console.log(stop);
+
+  console.log(decoded);
+
+  // TODO: CHECKSUM
+
+  // var stop = encoded.splice(encoded.length - 3, 3);
+  // console.log(stop);
+
+  // // 2
+  // for(var i = 5; i >= 0; --i) {
+  //   var encoded_digit = encoded.splice(encoded.length - 7, 7);
+  //   console.log(encoded_digit);
+  // }
+
+
+  // console.log('foo');
+  // Check known areas
+  // console.log(encoded.splice(encoded.length - 3, 3).join());
+  // console.log(barcode.ean13.stop.join());
+  // if(encoded.splice(0, 3).join() !== barcode.ean13.start.join()) {
+  //   console.log('fail 1');
+  //   return false;
+  // }
+  // if(encoded.splice(encoded.length - 3, 3).join() !== barcode.ean13.stop.join()) {
+  //   console.log('fail 2');
+  //   return false;
+  // }
+
+
+
+
+  // console.log('IT WORKED!');
+  // console.log(encoded);
+}
+
+
+/**
  * Encode part one of the barcode. This encodes the first number using one
  * table, then uses that value to pick from two different tables to encode the
- * subsequent six digits.
+ * subsequent six digits. Unlike the other digits, the first digit is not
+ * represented directly by a pattern of bars.
  *
  * @private
  *
@@ -140,7 +245,7 @@ barcode.ean13.prototype.encode = function() {
  *
  * @return {Array.<number>}
  */
-barcode.ean13.prototype.encode_part_1_ = function(string) {
+barcode.ean13.encode_part_1_ = function(string) {
   // var map = this.encoding_['1a'][string.charAt(0)];
   // TODO WHY DO I NEED THIS ANNOTATION?
   var map = /** @type {Array.<number>} */ (this.encoding_['1a'][string.charAt(0)]);
@@ -162,7 +267,7 @@ barcode.ean13.prototype.encode_part_1_ = function(string) {
  *
  * @return {Array.<number>}
  */
-barcode.ean13.prototype.encode_part_2_ = function(string) {
+barcode.ean13.encode_part_2_ = function(string) {
   var encoded = [];
   for (var i = 0; i < string.length; i++) {
     encoded = encoded.concat(this.encoding_['2'][string.charAt(i)]);

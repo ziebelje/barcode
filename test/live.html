@@ -4,7 +4,9 @@
     <title>Live</title>
     <script type="text/javascript" src="../src/barcode.js"></script>
     <script type="text/javascript" src="../src/ean13.js"></script>
-    <script type="text/javascript" src="../src/capture.js"></script>
+    <script type="text/javascript" src="../src/reader.js"></script>
+    <script type="text/javascript" src="../src/reader/processor.js"></script>
+    <script type="text/javascript" src="../src/reader/detector.js"></script>
 
   </head>
   <body>
@@ -22,28 +24,21 @@
 
   <script type="text/javascript">
 
-    var capture_video = new barcode.capture({
+    var reader_video = new barcode.reader({
       'source': document.getElementById('video'),
       'interval': 100, // ms
-      // 'threshold': 220,
+      'threshold': 255,
       'symbology': 'ean13'
     });
 
     document.getElementById('start').addEventListener('click', function() {
-      capture_video.start();
+      reader_video.start();
     });
 
     document.getElementById('stop').addEventListener('click', function() {
-      capture_video.stop();
+      reader_video.stop();
     });
 
-    setInterval(
-      function() {
-        // console.log(capture_video.get_threshold());
-        document.getElementById('threshold').value = capture_video.get_threshold();
-      },
-      50
-    );
 
 
     if(true) {
@@ -65,13 +60,13 @@
         // canvas.setAttribute('width', image.width);
         // canvas.setAttribute('height', image.height);
 
-        var capture_canvas = new barcode.capture({
+        var reader_canvas = new barcode.reader({
           'source': canvas,
-          'threshold': 220,
+          // 'threshold': 1,
           'symbology': 'ean13'
         });
 
-        capture_canvas.start();
+        reader_canvas.start();
       };
 
     }
@@ -113,7 +108,7 @@
         streaming = true;
 
 
-        // capture_video.start();
+        reader_video.start();
       }
     }, false);
 
@@ -126,7 +121,7 @@
     // }
 
     // setInterval(takepicture, 100);
-    // new barcode.capture(document.getElementById('canvas'));
+    // new barcode.reader(document.getElementById('canvas'));
 
     // startbutton.addEventListener('click', function(ev){
     //     takepicture();
@@ -162,7 +157,7 @@
     image.src = 'img/ean13_a.jpg';
 
     setTimeout(function() {
-      new barcode.capture(canvas);
+      new barcode.reader(canvas);
     }, 300);*/
   </script>
 
