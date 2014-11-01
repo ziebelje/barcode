@@ -56,8 +56,8 @@ barcode.reader.prototype.start = function() {
         self.detector_.detect();
         // self.show_histogram_();
         // self.show_threshold_();
-        self.show_scan_line_();
-        self.show_sequences_();
+        // self.show_scan_line_();
+        // self.show_sequences_();
       },
       this.interval_
     );

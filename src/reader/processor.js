@@ -57,33 +57,13 @@ barcode.reader.processor.prototype.process = function() {
   this.binarize_(this.threshold_);
 
   this.context_.putImageData(this.image_data_, 0, 0);
-
-  // this.display_histogram_(histogram);
-  // this.display_threshold_(this.threshold_);
 }
-
-
-/**
- * Grab the image data from the internal canvas.
- * TODO: Would probably be simpler just to save this on the object and use it
- * directly and then write it to the canvas at the very end
- */
-// barcode.reader.processor.prototype.get_image_data_ = function() {
-//   return this.context_.getImageData(
-//     0,
-//     0,
-//     this.canvas_.width,
-//     this.canvas_.height
-//   );
-// }
 
 
 /**
  * Make the image grayscale.
  */
 barcode.reader.processor.prototype.grayscale_ = function() {
-  // var image_data = this.get_image_data_();
-
   for(var i = 0; i < this.image_data_.data.length; i += 4) {
     var luminosity =
       0.2126 * this.image_data_.data[i] +
@@ -93,8 +73,6 @@ barcode.reader.processor.prototype.grayscale_ = function() {
 
     this.image_data_.data[i] = this.image_data_.data[i + 1] = this.image_data_.data[i + 2] = luminosity;
   }
-
-  // this.context_.putImageData(this.image_data_, 0, 0);
 }
 
 
@@ -102,15 +80,10 @@ barcode.reader.processor.prototype.grayscale_ = function() {
  * Binarize the already grayscale image around a threshold.
  */
 barcode.reader.processor.prototype.binarize_ = function(threshold) {
-  // console.log(threshold);
-  // var image_data = this.get_image_data_();
-
   for (var i = 0; i < this.image_data_.data.length; i += 4) {
     var value = (this.image_data_.data[i] + this.image_data_.data[i + 1] + this.image_data_.data[i + 2] >= threshold) ? 255 : 0;
     this.image_data_.data[i] = this.image_data_.data[i+1] = this.image_data_.data[i+2] = value;
   }
-
-  // this.context_.putImageData(this.image_data_, 0, 0);
 }
 
 
@@ -118,16 +91,12 @@ barcode.reader.processor.prototype.binarize_ = function(threshold) {
  * Get the histogram for the image.
  */
 barcode.reader.processor.prototype.generate_histogram_ = function() {
-  // var image_data = this.get_image_data_();
-
   // http://stackoverflow.com/questions/1295584/most-efficient-way-to-create-a-zero-filled-javascript-array
   var histogram = Array.apply(null, new Array(256)).map(Number.prototype.valueOf, 0);
 
   for (var i = 0; i < this.image_data_.data.length; i += 4) {
     histogram[this.image_data_.data[i]]++;
   }
-
-  // console.log(histogram);
 
   return histogram;
 }
@@ -251,8 +220,3 @@ barcode.reader.processor.prototype.get_threshold = function() {
 barcode.reader.processor.prototype.set_threshold = function(threshold) {
   this.threshold_ = threshold;
 }
-
-
-// barcode.reader.processor.prototype.get_canvas = function() {
-//   return this.canvas_;
-// }

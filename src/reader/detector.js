@@ -12,6 +12,7 @@ barcode.reader.detector = function(canvas) {
 
 barcode.reader.detector.prototype.canvas_;
 barcode.reader.detector.prototype.context_;
+barcode.reader.detector.prototype.image_data_;
 barcode.reader.detector.prototype.scan_line_; // the horizontal line that we're looking for a barcode on
 barcode.reader.detector.prototype.sequences_; // debugging data
 
@@ -20,6 +21,13 @@ barcode.reader.detector.prototype.sequences_; // debugging data
  * Search for a barcode. Right now just 1D.
  */
 barcode.reader.detector.prototype.detect = function() {
+  this.image_data_ = this.context_.getImageData(
+    0,
+    0,
+    this.canvas_.width,
+    this.canvas_.height
+  );
+
   // Scan across the entire center of the image.
   this.scan_line_ = this.get_line_(this.canvas_.height / 2);
 
@@ -77,32 +85,16 @@ barcode.reader.detector.prototype.detect = function() {
  * speed is more important: http://stackoverflow.com/a/4672319.
  */
 barcode.reader.detector.prototype.get_line_ = function(y) {
-  var image_data = this.get_image_data_();
-
   var line = [];
 
   for(var i = this.canvas_.width * y * 4; i < this.canvas_.width * (y + 1) * 4; i += 4) {
-    line.push(image_data.data[i] === 0 ? 1 : 0);
+    line.push(this.image_data_.data[i] === 0 ? 1 : 0);
   }
 
   return line;
 }
 
 
-/**
- * Grab the image data from the internal canvas.
- *
- * TODO: Would probably be simpler just to save this on the object and use it
- * directly and then write it to the canvas at the very end
- */
-barcode.reader.detector.prototype.get_image_data_ = function() {
-  return this.context_.getImageData(
-    0,
-    0,
-    this.canvas_.width,
-    this.canvas_.height
-  );
-}
 
 /**
  * Find a sequence of bits in a line. This does not make any assumption about
