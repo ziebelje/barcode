@@ -26,6 +26,7 @@ barcode.reader.processor = function(canvas, opt_threshold) {
 
 barcode.reader.processor.prototype.canvas_;
 barcode.reader.processor.prototype.context_;
+barcode.reader.processor.prototype.image_data_;
 barcode.reader.processor.prototype.histogram_;
 barcode.reader.processor.prototype.threshold_;
 barcode.reader.processor.prototype.fixed_threshold_;
@@ -35,6 +36,13 @@ barcode.reader.processor.prototype.fixed_threshold_;
  * Start processing the image
  */
 barcode.reader.processor.prototype.process = function() {
+  this.image_data_ = this.context_.getImageData(
+    0,
+    0,
+    this.canvas_.width,
+    this.canvas_.height
+  );
+
   this.grayscale_();
 
   this.histogram_ = this.generate_histogram_();
@@ -48,6 +56,8 @@ barcode.reader.processor.prototype.process = function() {
 
   this.binarize_(this.threshold_);
 
+  this.context_.putImageData(this.image_data_, 0, 0);
+
   // this.display_histogram_(histogram);
   // this.display_threshold_(this.threshold_);
 }
@@ -58,33 +68,33 @@ barcode.reader.processor.prototype.process = function() {
  * TODO: Would probably be simpler just to save this on the object and use it
  * directly and then write it to the canvas at the very end
  */
-barcode.reader.processor.prototype.get_image_data_ = function() {
-  return this.context_.getImageData(
-    0,
-    0,
-    this.canvas_.width,
-    this.canvas_.height
-  );
-}
+// barcode.reader.processor.prototype.get_image_data_ = function() {
+//   return this.context_.getImageData(
+//     0,
+//     0,
+//     this.canvas_.width,
+//     this.canvas_.height
+//   );
+// }
 
 
 /**
  * Make the image grayscale.
  */
 barcode.reader.processor.prototype.grayscale_ = function() {
-  var image_data = this.get_image_data_();
+  // var image_data = this.get_image_data_();
 
-  for(var i = 0; i < image_data.data.length; i += 4) {
+  for(var i = 0; i < this.image_data_.data.length; i += 4) {
     var luminosity =
-      0.2126 * image_data.data[i] +
-      0.7152 * image_data.data[i + 1] +
-      0.0722 * image_data.data[i + 2]
+      0.2126 * this.image_data_.data[i] +
+      0.7152 * this.image_data_.data[i + 1] +
+      0.0722 * this.image_data_.data[i + 2]
     ;
 
-    image_data.data[i] = image_data.data[i + 1] = image_data.data[i + 2] = luminosity;
+    this.image_data_.data[i] = this.image_data_.data[i + 1] = this.image_data_.data[i + 2] = luminosity;
   }
 
-  this.context_.putImageData(image_data, 0, 0);
+  // this.context_.putImageData(this.image_data_, 0, 0);
 }
 
 
@@ -92,14 +102,15 @@ barcode.reader.processor.prototype.grayscale_ = function() {
  * Binarize the already grayscale image around a threshold.
  */
 barcode.reader.processor.prototype.binarize_ = function(threshold) {
-  var image_data = this.get_image_data_();
+  // console.log(threshold);
+  // var image_data = this.get_image_data_();
 
-  for (var i = 0; i < image_data.data.length; i += 4) {
-    var value = (image_data.data[i] + image_data.data[i + 1] + image_data.data[i + 2] >= threshold) ? 255 : 0;
-    image_data.data[i] = image_data.data[i+1] = image_data.data[i+2] = value;
+  for (var i = 0; i < this.image_data_.data.length; i += 4) {
+    var value = (this.image_data_.data[i] + this.image_data_.data[i + 1] + this.image_data_.data[i + 2] >= threshold) ? 255 : 0;
+    this.image_data_.data[i] = this.image_data_.data[i+1] = this.image_data_.data[i+2] = value;
   }
 
-  this.context_.putImageData(image_data, 0, 0);
+  // this.context_.putImageData(this.image_data_, 0, 0);
 }
 
 
@@ -107,18 +118,24 @@ barcode.reader.processor.prototype.binarize_ = function(threshold) {
  * Get the histogram for the image.
  */
 barcode.reader.processor.prototype.generate_histogram_ = function() {
-  var image_data = this.get_image_data_();
+  // var image_data = this.get_image_data_();
 
   // http://stackoverflow.com/questions/1295584/most-efficient-way-to-create-a-zero-filled-javascript-array
   var histogram = Array.apply(null, new Array(256)).map(Number.prototype.valueOf, 0);
 
-  for (var i = 0; i < image_data.data.length; i += 4) {
-    histogram[image_data.data[i]]++;
+  for (var i = 0; i < this.image_data_.data.length; i += 4) {
+    histogram[this.image_data_.data[i]]++;
   }
+
+  // console.log(histogram);
 
   return histogram;
 }
 
+
+/**
+ * Get the histogram of the grayscale image.
+ */
 barcode.reader.processor.prototype.get_histogram = function() {
   return this.histogram_;
 }
