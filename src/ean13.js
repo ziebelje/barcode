@@ -90,7 +90,7 @@ barcode.ean13.encoding_ = {
 barcode.ean13.start = [1, 0, 1];
 barcode.ean13.intermediate = [0, 1, 0, 1, 0];
 barcode.ean13.stop = [1, 0, 1];
-barcode.ean13.length = 95; // in bytes
+barcode.ean13.bytes = 95; // in bytes
 
 /**
  * Encode the data.

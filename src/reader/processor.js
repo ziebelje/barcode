@@ -1,17 +1,5 @@
-// pretty quickly put together but has readable code with some comments and some stuff about parities
-// https://github.com/pplanel/barcode/blob/master/barcode.js
-	// normalize and convert to binary
 
-		// var min = Math.min.apply(null, pixels);
-		// var max = Math.max.apply(null, pixels);
 
-		// for (var i = 0, ii = pixels.length; i < ii; i++) {
-		// 	if (Math.round((pixels[i] - min) / (max - min) * 255) > config.threshold) {
-		// 		binary.push(1);
-		// 	} else {
-		// 		binary.push(0);
-		// 	}
-		// }
 
 /**
  * @constructor
@@ -175,6 +163,22 @@ barcode.reader.processor.prototype.generate_threshold_ = function(histogram) {
    }
   }
   return threshold;*/
+
+
+// pretty quickly put together but has readable code with some comments and some stuff about parities
+// https://github.com/pplanel/barcode/blob/master/barcode.js
+	// normalize and convert to binary
+
+		// var min = Math.min.apply(null, pixels);
+		// var max = Math.max.apply(null, pixels);
+
+		// for (var i = 0, ii = pixels.length; i < ii; i++) {
+		// 	if (Math.round((pixels[i] - min) / (max - min) * 255) > config.threshold) {
+		// 		binary.push(1);
+		// 	} else {
+		// 		binary.push(0);
+		// 	}
+		// }
 
 
   var total = this.canvas_.height * this.canvas_.width;

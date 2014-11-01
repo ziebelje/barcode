@@ -56,6 +56,8 @@ barcode.reader.prototype.start = function() {
         self.detector_.detect();
         // self.show_histogram_();
         // self.show_threshold_();
+        self.show_scan_line_();
+        self.show_sequences_();
       },
       this.interval_
     );
@@ -66,6 +68,8 @@ barcode.reader.prototype.start = function() {
     this.detector_.detect();
     // this.show_histogram_();
     // this.show_threshold_();
+    this.show_scan_line_();
+    this.show_sequences_();
   }
 }
 
@@ -157,4 +161,36 @@ barcode.reader.prototype.show_threshold_ = function() {
   this.context_.lineTo(threshold, this.canvas_.height);
   this.context_.lineWidth = 3;
   this.context_.stroke();
+}
+
+
+/**
+ * Display a scan line in the center of the canvas. This is for looks only
+ * although it's basically where the detector is looking at.
+ */
+barcode.reader.prototype.show_scan_line_ = function() {
+  this.context_.strokeStyle = '#ff0000';
+  this.context_.beginPath();
+  this.context_.moveTo(0, Math.round(this.canvas_.height / 2));
+  this.context_.lineTo(this.canvas_.width, Math.round(this.canvas_.height / 2));
+  this.context_.lineWidth = 1;
+  this.context_.stroke();
+}
+
+
+/**
+ * Draw lines on any detected special sequence (like start/stop). Lines are
+ * drawn in the center of the canvas on top of the scan line.
+ */
+barcode.reader.prototype.show_sequences_ = function() {
+  var sequences = this.detector_.get_sequences();
+
+  for(var i = 0; i < sequences.length; ++i) {
+    this.context_.strokeStyle = '#ff0000';
+    this.context_.beginPath();
+    this.context_.moveTo(sequences[i][0].start, Math.round(this.canvas_.height / 2));
+    this.context_.lineTo(sequences[i][sequences[i].length-1].stop, Math.round(this.canvas_.height / 2));
+    this.context_.lineWidth = 5;
+    this.context_.stroke();
+  }
 }
