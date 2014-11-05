@@ -38,9 +38,9 @@ barcode.reader.processor.prototype.fixed_threshold_;
 barcode.reader.processor.prototype.process = function() {
   this.image_data_ = this.context_.getImageData(
     0,
-    0,
+    Math.round(this.canvas_.height / 2),
     this.canvas_.width,
-    this.canvas_.height
+    1
   );
 
   this.grayscale_();
@@ -56,7 +56,7 @@ barcode.reader.processor.prototype.process = function() {
 
   this.binarize_(this.threshold_);
 
-  this.context_.putImageData(this.image_data_, 0, 0);
+  this.context_.putImageData(this.image_data_, 0, Math.round(this.canvas_.height / 2));
 }
 
 

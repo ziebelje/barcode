@@ -12,7 +12,6 @@ barcode.reader.detector = function(canvas) {
 
 barcode.reader.detector.prototype.canvas_;
 barcode.reader.detector.prototype.context_;
-barcode.reader.detector.prototype.image_data_;
 barcode.reader.detector.prototype.scan_line_; // the horizontal line that we're looking for a barcode on
 barcode.reader.detector.prototype.sequences_; // debugging data
 
@@ -21,15 +20,15 @@ barcode.reader.detector.prototype.sequences_; // debugging data
  * Search for a barcode. Right now just 1D.
  */
 barcode.reader.detector.prototype.detect = function() {
-  this.image_data_ = this.context_.getImageData(
+  var image_data = this.context_.getImageData(
     0,
-    0,
+    Math.round(this.canvas_.height / 2),
     this.canvas_.width,
-    this.canvas_.height
+    1
   );
 
   // Scan across the entire center of the image.
-  this.scan_line_ = this.get_line_(this.canvas_.height / 2);
+  this.scan_line_ = this.get_line_(image_data);
 
   // Take the default start/stop byte arrays and group them.
   var start = this.group_sequence_(barcode.ean13.start);
@@ -92,11 +91,11 @@ barcode.reader.detector.prototype.detect = function() {
  * angles, then just swap this out with Bresenam's algorithm. For now, valuing
  * speed is more important: http://stackoverflow.com/a/4672319.
  */
-barcode.reader.detector.prototype.get_line_ = function(y) {
+barcode.reader.detector.prototype.get_line_ = function(image_data) {
   var line = [];
 
-  for(var i = this.canvas_.width * y * 4; i < this.canvas_.width * (y + 1) * 4; i += 4) {
-    line.push(this.image_data_.data[i] === 0 ? 1 : 0);
+  for(var i = 0; i < image_data.data.length; i += 4) {
+    line.push(image_data.data[i] === 0 ? 1 : 0);
   }
 
   return line;
