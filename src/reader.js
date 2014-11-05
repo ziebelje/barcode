@@ -54,10 +54,10 @@ barcode.reader.prototype.start = function() {
         self.copy_source_();
         self.processor_.process();
         self.detector_.detect();
-        // self.show_histogram_();
-        // self.show_threshold_();
-        // self.show_scan_line_();
-        // self.show_sequences_();
+        self.show_histogram_();
+        self.show_threshold_();
+        self.show_scan_line_();
+        self.show_sequences_();
       },
       this.interval_
     );
@@ -94,6 +94,8 @@ barcode.reader.prototype.show_canvas_ = function() {
   this.source_.parentNode.appendChild(this.canvas_);
 
   if(this.source_type_ === 'video') {
+    console.log('w=' + this.source_.videoWidth + ' h=' + this.source_.videoHeight);
+
     this.canvas_.width = this.source_.videoWidth;
     this.canvas_.height = this.source_.videoHeight;
   }

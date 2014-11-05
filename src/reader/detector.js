@@ -70,6 +70,14 @@ barcode.reader.detector.prototype.detect = function() {
         );
 
         barcode.ean13.decode(encoded);
+
+        this.context_.strokeStyle = 'rgba(255, 0, 0, .5)';
+        this.context_.beginPath();
+        this.context_.moveTo(start_index, Math.round(this.canvas_.height / 2));
+        this.context_.lineTo(stop_index, Math.round(this.canvas_.height / 2));
+        this.context_.lineWidth = 20;
+        this.context_.stroke();
+
       }
     }
   }
