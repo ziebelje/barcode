@@ -147,12 +147,16 @@ barcode.reader.detector.prototype.detect = function() {
  * speed is more important: http://stackoverflow.com/a/4672319.
  */
 barcode.reader.detector.prototype.get_line_ = function(image_data) {
+  // console.log(image_data);
+
+
   var line = [];
 
   for(var i = 0; i < image_data.data.length; i += 4) {
     line.push(image_data.data[i] === 0 ? 1 : 0);
   }
 
+// console.log(line);
   return line;
 }
 
@@ -176,8 +180,6 @@ barcode.reader.detector.prototype.find_sequence_ = function(line, sequence) {
   var sequences = [];
   var possible_sequences = [];
   var current = {'value': line[0], 'length': 1};
-
-  console.log(line);
 
   // Loop over the line
   for(var i = 1; i < line.length; ++i) {

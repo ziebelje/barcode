@@ -84,10 +84,22 @@ barcode.reader.processor.prototype.grayscale_ = function() {
  */
 barcode.reader.processor.prototype.binarize_ = function(threshold) {
   // threshold = 127;
-  // console.log(threshold);
+  // console.log(this.image_data_.data);
   for (var i = 0; i < this.image_data_.data.length; i += 4) {
-    var value = (((this.image_data_.data[i] + this.image_data_.data[i + 1] + this.image_data_.data[i + 2]) / 3) >= threshold) ? 255 : 0;
-    this.image_data_.data[i] = this.image_data_.data[i+1] = this.image_data_.data[i+2] = value;
+    var value;
+
+    // Full transparency is assumed to be white. Partially transparent pixels
+    // will have transparency removed but still binarized based on the rgb data
+    // of the pixel.
+    if(this.image_data_.data[i + 3] === 0) {
+      value = 255;
+    }
+    else {
+      value = (((this.image_data_.data[i] + this.image_data_.data[i + 1] + this.image_data_.data[i + 2]) / 3) >= threshold) ? 255 : 0;
+    }
+
+    this.image_data_.data[i] = this.image_data_.data[i + 1] = this.image_data_.data[i + 2] = value;
+    this.image_data_.data[i + 3] = 255; // Remove transparency
   }
 }
 
