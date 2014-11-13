@@ -147,16 +147,12 @@ barcode.reader.detector.prototype.detect = function() {
  * speed is more important: http://stackoverflow.com/a/4672319.
  */
 barcode.reader.detector.prototype.get_line_ = function(image_data) {
-  // console.log(image_data);
-
-
   var line = [];
 
   for(var i = 0; i < image_data.data.length; i += 4) {
     line.push(image_data.data[i] === 0 ? 1 : 0);
   }
 
-// console.log(line);
   return line;
 }
 
@@ -181,8 +177,11 @@ barcode.reader.detector.prototype.find_sequence_ = function(line, sequence) {
   var possible_sequences = [];
   var current = {'value': line[0], 'length': 1};
 
-  // Loop over the line
-  for(var i = 1; i < line.length; ++i) {
+  // Loop over the line. Actually looping over the length of the line plus one.
+  // This last pixel will be undefined and trigger the logic that happens when
+  // one bar ends and another begins. Without this, images ending with a black
+  // pixel won't have the stop sequence properly identified.
+  for(var i = 1; i < line.length + 1; ++i) {
     // When changing from a 0 to a 1 or vice versa
     if(line[i] !== current.value) {
       // Loop over the possible sqeuences backwards. If I find a match,
