@@ -90,7 +90,7 @@ barcode.ean13.encoding_ = {
 barcode.ean13.start = [1, 0, 1];
 barcode.ean13.intermediate = [0, 1, 0, 1, 0];
 barcode.ean13.stop = [1, 0, 1];
-barcode.ean13.bytes = 95; // in bytes
+barcode.ean13.bytes = 95;
 
 /**
  * Encode the data.
@@ -137,6 +137,10 @@ barcode.ean13.encode = function() {
 /**
  */
 barcode.ean13.decode = function(encoded) {
+  if(encoded.length !== barcode.ean13.bytes) {
+    return [];
+  }
+
   // console.log(encoded);
   // debugger;
   var compare = function(a, b) {
@@ -198,7 +202,12 @@ barcode.ean13.decode = function(encoded) {
   var stop = encoded.splice(0, 3);
   // console.log(stop);
 
-  console.log(decoded);
+  // if(decoded.length === 12) {
+    // alert(decoded);
+  // }
+  // console.log(decoded);
+
+  return decoded;
 
   // TODO: CHECKSUM
 

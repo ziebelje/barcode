@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Static</title>
+    <script type="text/javascript" src="../src/barcode.js"></script>
+    <script type="text/javascript" src="../src/ean13.js"></script>
+    <script type="text/javascript" src="../src/reader.js"></script>
+    <script type="text/javascript" src="../src/reader/processor.js"></script>
+    <script type="text/javascript" src="../src/reader/detector.js"></script>
+
+  </head>
+  <body>
+  </body>
+
+  <script type="text/javascript">
+    var tests = {
+      'ean13': [
+        // '220px-ISBNetEAN.jpg',
+        // '2923038275_ae205c7e31.jpg',
+        // '8585363481_9baab0f413_z.jpg',
+        '11949849541036280448barcode_ean13_svg_hi.png',
+        // 'barcode_ean13.jpg',
+        // 'barcode_sample.jpg',
+        // 'codigo-de-barras-300x240.jpg',
+        // 'EAN13.jpg',
+        // 'ean13_barcode_label.jpg',
+        // 'EAN13Barcode.jpg',
+        // 'ean13barcode_header.jpg',
+        // 'EAN-13-Barcode-Labels-103731_image.jpg',
+        // 'ean-13-scnr.jpg',
+        // 'ean-13-slid-1.jpg',
+        // 'greetings-barcodes-700.jpg',
+        // 'hqdefault.jpg',
+        // 'Light margin 1.jpg',
+        // 'tesco_dishcloths.jpg',
+        // 'wineforspice.barcode.rani-gold.IMGP1544.JPG'
+      ]
+    };
+
+    for(var i = 0; i < tests.ean13.length; i++) {
+      (function(i) {
+        var div = document.createElement('div');
+        var canvas = document.createElement('canvas');
+        div.appendChild(canvas);
+
+        document.querySelector('body').appendChild(div);
+
+        var barcode_reader = new barcode.reader({
+          'source': canvas,
+          'symbology': 'ean13'
+        });
+
+        div.appendChild(barcode_reader.get_canvas());
+
+        var context = canvas.getContext('2d');
+        var image = new Image();
+        image.src = 'img/ean13/' + tests.ean13[i];
+        image.onload = function() {
+          canvas.width = image.width;
+          canvas.height = image.height;
+
+          context.drawImage(image, 0, 0);
+
+
+
+          barcode_reader.start();
+
+
+        };
+      })(i);
+    }
+
+
+
+
+
+  </script>
+
+</html>

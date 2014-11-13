@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Live</title>
+    <script type="text/javascript" src="../src/barcode.js"></script>
+    <script type="text/javascript" src="../src/ean13.js"></script>
+    <script type="text/javascript" src="../src/reader.js"></script>
+    <script type="text/javascript" src="../src/reader/processor.js"></script>
+    <script type="text/javascript" src="../src/reader/detector.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body style="margin: 0; padding: 0; overflow: hidden; background: black;">
+    <video id="video" autoplay="autoplay" style="display: none;"></video>
+    <div style="background: red; height: 4px; position: absolute; top: 50%; margin-top: -2px; width: 100%; opacity: 0.5;"></div>
+    <a href="javascript:void(0)" id="fullscreen" style="position: absolute; top: 0; left: 0">fullscreen</div>
+  </body>
+
+  <script type="text/javascript">
+    // https://www.simpl.info/getusermedia/sources/index.html
+    var get_video_sources = function(callback) {
+      if (typeof MediaStreamTrack !== 'undefined') {
+        MediaStreamTrack.getSources(function(sources) {
+          var video_sources = [];
+          for(var i = 0; i < sources.length; ++i) {
+            if(sources[i].kind === 'video') {
+              video_sources.push(sources[i]);
+            }
+          }
+          callback(video_sources);
+        });
+      }
+      else {
+        callback([]);
+      }
+    }
+
+    get_video_sources(function(video_sources) {
+      // alert(JSON.stringify(video_sources));
+      var source_id = video_sources[0].id;
+      for(var i = 0; i < video_sources.length; i++) {
+        if(video_sources[i].facing === 'environment') {
+          source_id = video_sources[i].id;
+        }
+      }
+      // alert(source_id);
+
+      var video = document.getElementById('video');
+      var barcode_reader = new barcode.reader({
+        'source': video,
+        'interval': 100,
+        'symbology': 'ean13'
+      });
+
+
+
+      var body = document.querySelector('body');
+      var fullscreen = document.getElementById('fullscreen');
+      fullscreen.addEventListener('click', function() {
+        if (body.requestFullscreen) {
+          body.requestFullscreen();
+        } else if (body.msRequestFullscreen) {
+          body.msRequestFullscreen();
+        } else if (body.mozRequestFullScreen) {
+          body.mozRequestFullScreen();
+        } else if (body.webkitRequestFullscreen) {
+          body.webkitRequestFullscreen();
+        }
+      });
+
+      navigator.getMedia = (
+        navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia
+      );
+
+      navigator.getMedia(
+        {
+          'audio': false,
+          'video': {
+            'mandatory': {
+              'minWidth': '320',
+              'minHeight': '180'
+            },
+            'optional': [
+              {'sourceId': source_id}
+            ]
+          }
+        },
+        function(stream) {
+          if (navigator.mozGetUserMedia) {
+            video.mozSrcObject = stream;
+          } else {
+            var vendorURL = window.URL || window.webkitURL;
+            video.src = vendorURL.createObjectURL(stream);
+          }
+          video.play();
+        },
+        function(error) {
+          console.error(error);
+        }
+      );
+
+      var streaming = false;
+      video.addEventListener('canplay', function() {
+        if (!streaming) {
+          streaming = true;
+          // get_video_sources(function(video_sources) {
+            // alert(JSON.stringify(video_sources));
+          // });
+
+
+          barcode_reader.start();
+
+          var barcode_reader_canvas = barcode_reader.get_canvas();
+          document.querySelector('body').appendChild(barcode_reader_canvas);
+
+        }
+      });
+    });
+
+
+
+
+
+  </script>
+
+</html>

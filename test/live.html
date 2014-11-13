@@ -98,16 +98,16 @@
         if (!streaming) {
           streaming = true;
 
-          console.log('live.html w=' + video.videoWidth + ' h=' + video.videoHeight);
+          // console.log('live.html w=' + video.videoWidth + ' h=' + video.videoHeight);
 
-          var reader_video = new barcode.reader({
+          var reader = new barcode.reader({
             'source': video,
             'interval': 100, // ms
-            'threshold': 255,
+            // 'threshold': 255,
             'symbology': 'ean13'
           });
 
-          reader_video.start();
+          reader.start();
         }
       },
       false

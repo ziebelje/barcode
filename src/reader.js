@@ -54,9 +54,9 @@ barcode.reader.prototype.start = function() {
         self.copy_source_();
         self.processor_.process();
         self.detector_.detect();
-        self.show_histogram_();
-        self.show_threshold_();
-        self.show_scan_line_();
+        // self.show_histogram_();
+        // self.show_threshold_();
+        // self.show_scan_line_();
         self.show_sequences_();
       },
       this.interval_
@@ -68,7 +68,7 @@ barcode.reader.prototype.start = function() {
     this.detector_.detect();
     // this.show_histogram_();
     // this.show_threshold_();
-    this.show_scan_line_();
+    // this.show_scan_line_();
     this.show_sequences_();
   }
 }
@@ -91,10 +91,10 @@ barcode.reader.prototype.stop = function() {
  * certain visiual effects often just for debugging.
  */
 barcode.reader.prototype.show_canvas_ = function() {
-  this.source_.parentNode.appendChild(this.canvas_);
+  // this.source_.parentNode.appendChild(this.canvas_);
 
   if(this.source_type_ === 'video') {
-    console.log('w=' + this.source_.videoWidth + ' h=' + this.source_.videoHeight);
+    // console.log('w=' + this.source_.videoWidth + ' h=' + this.source_.videoHeight);
 
     this.canvas_.width = this.source_.videoWidth;
     this.canvas_.height = this.source_.videoHeight;
@@ -104,10 +104,10 @@ barcode.reader.prototype.show_canvas_ = function() {
     this.canvas_.height = this.source_.height;
   }
 
-  var rect = this.source_.getBoundingClientRect();
-  this.canvas_.style.position = 'absolute';
-  this.canvas_.style.left = rect.left + 'px';
-  this.canvas_.style.top = rect.top + 'px';
+  // var rect = this.source_.getBoundingClientRect();
+  // this.canvas_.style.position = 'absolute';
+  // this.canvas_.style.left = rect.left + 'px';
+  // this.canvas_.style.top = rect.top + 'px';
 }
 
 
@@ -187,12 +187,25 @@ barcode.reader.prototype.show_scan_line_ = function() {
 barcode.reader.prototype.show_sequences_ = function() {
   var sequences = this.detector_.get_sequences();
 
+  var r, g, b;
   for(var i = 0; i < sequences.length; ++i) {
-    this.context_.strokeStyle = '#ff0000';
+    // r = Math.round(Math.random() * 255);
+    // g = Math.round(Math.random() * 255);
+    // b = Math.round(Math.random() * 255);
+    // console.log(r);
+    this.context_.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+    // this.context_.strokeStyle = 'rgba(' + r + ', ' + g + ', ' + b + ', 1)';
     this.context_.beginPath();
-    this.context_.moveTo(sequences[i][0].start, Math.round(this.canvas_.height / 2));
-    this.context_.lineTo(sequences[i][sequences[i].length-1].stop, Math.round(this.canvas_.height / 2));
-    this.context_.lineWidth = 5;
+    this.context_.moveTo(sequences[i][0].start, Math.round(this.canvas_.height / 2) + 15);
+    this.context_.lineTo(sequences[i][sequences[i].length-1].stop, Math.round(this.canvas_.height / 2) + 15);
+    this.context_.lineWidth = 10;
     this.context_.stroke();
   }
+}
+
+/**
+ * I PUT THIS HERE FOR DEBUGGING ONLY
+ */
+barcode.reader.prototype.get_canvas = function() {
+  return this.canvas_;
 }

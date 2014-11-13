@@ -40,7 +40,7 @@ barcode.reader.processor.prototype.process = function() {
     0,
     Math.round(this.canvas_.height / 2),
     this.canvas_.width,
-    1
+    10
   );
 
   this.grayscale_();
@@ -61,9 +61,12 @@ barcode.reader.processor.prototype.process = function() {
 
 
 /**
- * Make the image grayscale.
+ * Make the image grayscale. This will convert every pixel to a pixel with
+ * R === G === B === (weighted average of the original values). Range will still
+ * be between 0 and 255.
  */
 barcode.reader.processor.prototype.grayscale_ = function() {
+  l = [];
   for(var i = 0; i < this.image_data_.data.length; i += 4) {
     var luminosity =
       0.2126 * this.image_data_.data[i] +
@@ -80,8 +83,10 @@ barcode.reader.processor.prototype.grayscale_ = function() {
  * Binarize the already grayscale image around a threshold.
  */
 barcode.reader.processor.prototype.binarize_ = function(threshold) {
+  // threshold = 127;
+  // console.log(threshold);
   for (var i = 0; i < this.image_data_.data.length; i += 4) {
-    var value = (this.image_data_.data[i] + this.image_data_.data[i + 1] + this.image_data_.data[i + 2] >= threshold) ? 255 : 0;
+    var value = (((this.image_data_.data[i] + this.image_data_.data[i + 1] + this.image_data_.data[i + 2]) / 3) >= threshold) ? 255 : 0;
     this.image_data_.data[i] = this.image_data_.data[i+1] = this.image_data_.data[i+2] = value;
   }
 }
@@ -167,7 +172,9 @@ barcode.reader.processor.prototype.generate_threshold_ = function(histogram) {
 		// }
 
 
-  var total = this.canvas_.height * this.canvas_.width;
+  // var total = this.canvas_.height * this.canvas_.width;
+  // var total = this.canvas_.width * 10;
+  var total = this.image_data_.data.length / 4; // Total number of pixels
 
   var sum = 0;
   for (var i = 1; i < 256; ++i)
