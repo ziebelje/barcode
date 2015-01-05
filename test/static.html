@@ -9,31 +9,32 @@
     <script type="text/javascript" src="../src/reader/detector.js"></script>
 
   </head>
-  <body style="background: green">
+  <body style="background: ">
   </body>
 
   <script type="text/javascript">
     var tests = {
       'ean13': [
-        // '220px-ISBNetEAN.jpg',
-        // '2923038275_ae205c7e31.jpg',
-        // '8585363481_9baab0f413_z.jpg',
-        '11949849541036280448barcode_ean13_svg_hi.png',
-        // 'barcode_ean13.jpg',
-        // 'barcode_sample.jpg',
-        // 'codigo-de-barras-300x240.jpg',
-        // 'EAN13.jpg',
-        // 'ean13_barcode_label.jpg',
-        // 'EAN13Barcode.jpg',
-        // 'ean13barcode_header.jpg',
-        // 'EAN-13-Barcode-Labels-103731_image.jpg',
-        // 'ean-13-scnr.jpg',
-        // 'ean-13-slid-1.jpg',
-        // 'greetings-barcodes-700.jpg',
-        // 'hqdefault.jpg',
-        // 'Light margin 1.jpg',
-        // 'tesco_dishcloths.jpg',
-        // 'wineforspice.barcode.rani-gold.IMGP1544.JPG'
+        'hqdefault.jpg',                                        // PASS
+        '2923038275_ae205c7e31.jpg',                            // PASS
+        '2923038275_ae205c7e31_ideal.png',                      // PASS
+        '11949849541036280448barcode_ean13_svg_hi.png',         // PASS
+        'barcode_ean13.jpg',                                    // PASS
+        'codigo-de-barras-300x240.jpg', //cow                   // PASS
+        'EAN13Barcode.jpg',                                     // PASS
+        'ean13barcode_header.jpg',                              // PASS
+        'barcode_sample.jpg',                                   // PASS
+        'tesco_dishcloths.jpg',                                 // PASS
+        'wineforspice.barcode.rani-gold.IMGP1544.JPG'           // PASS (pretty lucky on this one)
+        // 'EAN13.jpg',                                            // X (gets the first 3 numbers and then fails on the "2")
+        // '220px-ISBNetEAN.jpg',                                  // X (poor quality/resolution)
+        // 'ean13_barcode_label.jpg',                              // X (did decently, but probably too poor of quality))
+        // 'greetings-barcodes-700.jpg',                           // X (failed to find the start sequence because the bars are really thin)
+        // 'EAN-13-Barcode-Labels-103731_image.jpg',               // X (not even reading the right spot)
+        // '8585363481_9baab0f413_z.jpg',                          // X (couldn't find start sequence; bars threshold too thin)
+        // 'ean-13-scnr.jpg',                                      // X (couldn't find start sequence; bars threshold too thin)
+        // 'ean-13-slid-1.jpg',                                    // X (bounds detection)
+        // 'Light margin 1.jpg',                                   // X (quality/thresholding?)
       ]
     };
 

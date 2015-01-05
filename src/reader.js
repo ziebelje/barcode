@@ -170,7 +170,7 @@ barcode.reader.prototype.show_threshold_ = function() {
  * Display a scan line in the center of the canvas. This is for looks only
  * although it's basically where the detector is looking at.
  */
-barcode.reader.prototype.show_scan_line_ = function() {
+barcode.reader.prototype.show_scan_line_ = function() { // Red
   this.context_.strokeStyle = '#ff0000';
   this.context_.beginPath();
   this.context_.moveTo(0, Math.round(this.canvas_.height / 2));
@@ -181,23 +181,17 @@ barcode.reader.prototype.show_scan_line_ = function() {
 
 
 /**
- * Draw lines on any detected special sequence (like start/stop). Lines are
- * drawn in the center of the canvas on top of the scan line.
+ * Draw lines on any detected special sequence (like start/stop).
  */
 barcode.reader.prototype.show_sequences_ = function() {
   var sequences = this.detector_.get_sequences();
 
   var r, g, b;
   for(var i = 0; i < sequences.length; ++i) {
-    // r = Math.round(Math.random() * 255);
-    // g = Math.round(Math.random() * 255);
-    // b = Math.round(Math.random() * 255);
-    // console.log(r);
-    this.context_.strokeStyle = 'rgba(255, 255, 0, 0.5)';
-    // this.context_.strokeStyle = 'rgba(' + r + ', ' + g + ', ' + b + ', 1)';
+    this.context_.strokeStyle = 'rgba(255, 255, 0, 0.5)'; // Yellow
     this.context_.beginPath();
-    this.context_.moveTo(sequences[i][0].start, Math.round(this.canvas_.height / 2) + 15);
-    this.context_.lineTo(sequences[i][sequences[i].length-1].stop, Math.round(this.canvas_.height / 2) + 15);
+    this.context_.moveTo(sequences[i][0].start_pixel, Math.round(this.canvas_.height / 2) + 15);
+    this.context_.lineTo(sequences[i][sequences[i].length-1].stop_pixel, Math.round(this.canvas_.height / 2) + 15);
     this.context_.lineWidth = 10;
     this.context_.stroke();
   }

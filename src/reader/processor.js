@@ -83,7 +83,9 @@ barcode.reader.processor.prototype.grayscale_ = function() {
  * Binarize the already grayscale image around a threshold.
  */
 barcode.reader.processor.prototype.binarize_ = function(threshold) {
-  // threshold = 127;
+  // threshold = 90;
+  // console.log('threshold=' + threshold);
+  // threshold = 80;
   // console.log(this.image_data_.data);
   for (var i = 0; i < this.image_data_.data.length; i += 4) {
     var value;

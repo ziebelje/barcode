@@ -12,7 +12,6 @@ barcode.reader.detector = function(canvas) {
 
 barcode.reader.detector.prototype.canvas_;
 barcode.reader.detector.prototype.context_;
-barcode.reader.detector.prototype.scan_line_; // the horizontal line that we're looking for a barcode on
 barcode.reader.detector.prototype.sequences_; // debugging data
 
 
@@ -28,115 +27,83 @@ barcode.reader.detector.prototype.detect = function() {
   );
 
   // Scan across the entire center of the image.
-  this.scan_line_ = this.get_line_(image_data);
+  var line = this.get_line_(image_data);
 
-  // Take the default start/stop byte arrays and group them.
-  var start = this.group_sequence_(barcode.ean13.start);
-  var stop = this.group_sequence_(barcode.ean13.stop);
+  // Group the start/stop sequences.
+  var start_sequence_grouped = this.group_sequence_(barcode.ean13.start_sequence);
+  var stop_sequence_grouped = this.group_sequence_(barcode.ean13.stop_sequence);
 
   // Locate all possible start and stop sequences along the scan line.
-  var start_sequences = this.find_sequence_(this.scan_line_, start);
-  var stop_sequences = this.find_sequence_(this.scan_line_, stop);
+  var start_sequences = this.find_sequences_(line, start_sequence_grouped);
+  var stop_sequences = this.find_sequences_(line, stop_sequence_grouped);
 
   // Just to help with debugging.
   this.sequences_ = start_sequences.concat(stop_sequences); // TODO DEBUGGING ONLY
+  // this.sequences_ = [].concat(start_sequences); // TODO DEBUGGING ONLY
+  // console.log(this.sequences_);
 
-  // From the found start/stop sequences, pick the overall range that best
-  // matches the expected range.
-  var best_pair = {};
-  for(var i = 0; i < start_sequences.length; ++i) {
+  // Get the boundary information for the barcode based on the start/stop sequences.
+  var bounds = this.get_bounds_(start_sequences, stop_sequences);
 
-    var pixels_per_byte = this.get_average_pixels_per_byte_(start, start_sequences[i]);
-    // Guess the length of the entire barcode to predict which stop sequence is correct.
-    var expected_length = barcode.ean13.bytes * pixels_per_byte;
-    // console.log('expected_length = ' + expected_length);
-    // var error_margin = 0.01;
-    // This doesn't work very well.
-    // If a bar is 5 pixels wide with 95 bytes, that means the entire barcode can be 475 +- 23px (5% error)
-    // If a bar is 6 pixels wide with 95 bytes, that means the entire barcode can be 475 +- 28px (5% error)
-    // The more bytes, the wider more allowance there is.
+  // Group the detected barcode pixel data together.
+  var grouped_line = this.group_sequence_(
+    line.splice(bounds.start_pixel, bounds.stop_pixel - bounds.start_pixel)
+  );
 
-    // Look for the best match
+  // Calculate how many pixels each bar should use.
+  var pixels_per_bar = (bounds.stop_pixel - bounds.start_pixel) / barcode.ean13.bytes;
 
-    for(var j = 0; j < stop_sequences.length; ++j) {
-      var start_index = start_sequences[i][0].start;
-      var stop_index = stop_sequences[j][stop_sequences[j].length - 1].stop;
-      var actual_length = stop_index - start_index;
+  // Normalize the grouped line data so the "width" attribute more correctly
+  // represents how many bits that value is.
+  var normalized_grouped_line = grouped_line.map(function(element) {
+    element.width = element.width / pixels_per_bar;
+    return element;
+  });
+  var normalized_grouped_line_copy = grouped_line.map(function(e) { return e; }); // debug;
 
-      // var difference = Math.abs(actual_length - expected_length);
-      var length = actual_length;
-      // if(best_pair.difference === undefined || difference < best_pair.difference) { // originally tried to match closest expected, but it's hard to get an accurate pixels-per-byte with just a few starting bars
-      if(best_pair.length === undefined || length > best_pair.length) { // trying this because often the longest match would be the best
-        // console.log('NEW BEST PAIR BECAUSE ' + difference + ' < ' + best_pair.difference);
-        best_pair.start_index = start_index;
-        best_pair.stop_index = stop_index;
-        // best_pair.difference = difference;
-        best_pair.length = length;
+  var decoded = barcode.ean13.decode(normalized_grouped_line);
+  console.log(decoded.join(''));
+  // var decoded = {};
+
+
+
+  if(true) { // debug
+    // debug draw encoded
+    this.context_.fillStyle = 'rgb(255, 255, 255)';
+    this.context_.fillRect(0, Math.round(this.canvas_.height / 2) - 10, this.canvas_.width, 10);
+    var position = bounds.start_pixel;
+    for(var i = 0; i < normalized_grouped_line_copy.length; i++) {
+      var rounded_width = Math.round(normalized_grouped_line_copy[i].width);
+      if(normalized_grouped_line_copy[i].value === 1) {
+        this.context_.fillStyle = 'rgb(0, 0, 255)';
       }
-      // else {
-        // console.log('NO NEW BEST PAIR');
-      // }
-
+      else {
+        this.context_.fillStyle = 'rgb(255, 255, 255)';
+      }
+      this.context_.fillRect(position, Math.round(this.canvas_.height / 2) - 10, rounded_width * pixels_per_bar, 10);
+      position += rounded_width * pixels_per_bar;
     }
 
-    // console.log(best_pair);
-
-
-    // For every start sequence, loop over all stop sequences to find possible
-    // full barcodes.
-    // for(var j = 0; j < stop_sequences.length; ++j) {
-      // var start_index = start_sequences[i][0].start;
-      // var stop_index = stop_sequences[j][stop_sequences[j].length - 1].stop;
-      // var actual_length = stop_index - start_index;
-
-      // If there's a match within the error margin...
-      // if(
-        // actual_length >= expected_length - expected_length * error_margin &&
-        // actual_length <= expected_length + expected_length * error_margin
-      // ) {
-
-
-      // }
-    // }
-  }
-
-  pixels_per_byte = (best_pair.stop_index - best_pair.start_index) / barcode.ean13.bytes;
-
-  console.log('pixels per byte = ' + pixels_per_byte);
-
-  var encoded = this.get_encoded_(
-    this.scan_line_,
-    best_pair.start_index,
-    best_pair.stop_index,
-    pixels_per_byte
-  );
-  var len = encoded.length; //test
-
-  // console.log(encoded.length);
-
-  // console.log(pixels_per_byte);
-
-  var decoded = barcode.ean13.decode(encoded);
-
-  this.context_.strokeStyle = 'rgba(255, 0, 0, .5)';
-  this.context_.beginPath();
-  this.context_.moveTo(best_pair.start_index, Math.round(this.canvas_.height / 2) + 25);
-  this.context_.lineTo(best_pair.stop_index, Math.round(this.canvas_.height / 2) + 25);
-  this.context_.lineWidth = 10;
-  this.context_.stroke();
-
-  if(decoded.length === 12) {
-    this.context_.strokeStyle = 'rgba(0, 255, 0, .5)';
+    // debug draw a red line across the width of the bounds
+    this.context_.strokeStyle = 'rgba(255, 0, 0, .5)'; // Red across best pair
     this.context_.beginPath();
-    this.context_.moveTo(best_pair.start_index, Math.round(this.canvas_.height / 2) + 35);
-    this.context_.lineTo(best_pair.stop_index, Math.round(this.canvas_.height / 2) + 35);
+    this.context_.moveTo(bounds.start_pixel, Math.round(this.canvas_.height / 2) + 25);
+    this.context_.lineTo(bounds.stop_pixel, Math.round(this.canvas_.height / 2) + 25);
     this.context_.lineWidth = 10;
     this.context_.stroke();
-    console.log(decoded.join(' ') + ' - ' + len);
-    // alert(decoded);
+
+    // debug draw a green line if it decoded properly
+    if(decoded.length === 12) {
+      this.context_.strokeStyle = 'rgba(0, 255, 0, .5)'; // Green
+      this.context_.beginPath();
+      this.context_.moveTo(bounds.start_pixel, Math.round(this.canvas_.height / 2) + 35);
+      this.context_.lineTo(bounds.stop_pixel, Math.round(this.canvas_.height / 2) + 35);
+      this.context_.lineWidth = 10;
+      this.context_.stroke();
+    }
   }
 
-}
+};
 
 
 /**
@@ -145,6 +112,12 @@ barcode.reader.detector.prototype.detect = function() {
  * scanning. If that switch was made to help locate barcodes or accept crazy
  * angles, then just swap this out with Bresenam's algorithm. For now, valuing
  * speed is more important: http://stackoverflow.com/a/4672319.
+ *
+ * This also "flips" the data. A value of 0 in the image data is a black pixel
+ * and is returned as a 1. A value of 255 in the image data is a white pixel
+ * and is returned as a 0.
+ *
+ * TODO: Rename this function to reflect the above a little clearer?
  */
 barcode.reader.detector.prototype.get_line_ = function(image_data) {
   var line = [];
@@ -157,6 +130,36 @@ barcode.reader.detector.prototype.get_line_ = function(image_data) {
 }
 
 
+/**
+ * Given a set of possible start sequences and possible stop sequences, find the
+ * pair of start/stop sequences that best seems to capture the barcode and
+ * return boundary information.
+ *
+ * TODO: This was some stuff about determing about which stop sequence is the
+ * right distance away. Revisit this. For now, just picking the longest match
+ * and calling it good.
+ */
+barcode.reader.detector.prototype.get_bounds_ = function(start_sequences, stop_sequences) {
+  var bounds = null;
+
+  for(var i = 0; i < start_sequences.length; ++i) {
+    for(var j = 0; j < stop_sequences.length; ++j) {
+      var start_pixel = start_sequences[i][0].start_pixel;
+      var stop_pixel = stop_sequences[j][stop_sequences[j].length - 1].stop_pixel;
+      var width = stop_pixel - start_pixel;
+
+      if(bounds === null || width > bounds.width) {
+        bounds = {
+          'start_pixel': start_pixel,
+          'stop_pixel': stop_pixel,
+          'width': width
+        }
+      }
+    }
+  }
+
+  return bounds;
+};
 
 /**
  * Find a sequence of bits in a line. This does not make any assumption about
@@ -170,12 +173,10 @@ barcode.reader.detector.prototype.get_line_ = function(image_data) {
  * Currently this would take 2 passes to find all the start and all the stop
  * sequences. Probably better things to optimize first.
  */
-barcode.reader.detector.prototype.find_sequence_ = function(line, sequence) {
-  // console.log('find_sequence_');
-  // console.log(sequence);
+barcode.reader.detector.prototype.find_sequences_ = function(line, sequence) {
   var sequences = [];
   var possible_sequences = [];
-  var current = {'value': line[0], 'length': 1};
+  var current = {'value': line[0], 'width': 1};
 
   // Loop over the line. Actually looping over the length of the line plus one.
   // This last pixel will be undefined and trigger the logic that happens when
@@ -194,13 +195,13 @@ barcode.reader.detector.prototype.find_sequence_ = function(line, sequence) {
         // sequence needs to have at least one value in it. Therefore, there is
         // always a previous value to calculate a ratio from. :)
         var sequence_index = possible_sequences[j].length;
-        var expected_ratio = sequence[sequence_index - 1].length / sequence[sequence_index].length;
-        var actual_ratio = possible_sequences[j][sequence_index - 1].length / current.length;
+        var expected_ratio = sequence[sequence_index - 1].width / sequence[sequence_index].width;
+        var actual_ratio = possible_sequences[j][sequence_index - 1].width / current.width;
 
         // Allowed error margin when looking for a sequence. I believe this
         // can be pretty liberal as we're just looking for some rough matches
         // and will also filter by distance apart.
-        var error_margin = 0.45;
+        var error_margin = 1.45;
         var ratio_match =
           actual_ratio >= expected_ratio - expected_ratio * error_margin &&
           actual_ratio <= expected_ratio + expected_ratio * error_margin
@@ -230,15 +231,13 @@ barcode.reader.detector.prototype.find_sequence_ = function(line, sequence) {
       }
 
       // Set the new current value.
-      current = {'value': line[i], 'length': 0, 'start': i, 'stop': i};
+      current = {'value': line[i], 'width': 0, 'start_pixel': i, 'stop_pixel': i};
     }
 
-    // console.log(sequences);
-
     // Each new pixel that doesn't change value from the previous pixel should
-    // just increment length and where the current pixel group stops.
-    current.length++;
-    current.stop = i;
+    // just increment width and where the current pixel group stops.
+    current.width++;
+    current.stop_pixel = i;
   }
 
   return sequences;
@@ -248,19 +247,19 @@ barcode.reader.detector.prototype.find_sequence_ = function(line, sequence) {
 /**
  * Convert an array sequence like [1, 0, 0] into a data format that's a little
  * more accessible for the search algorithm. All consecutive bits in a sequence
- * get grouped together into an objects like {'length': 5, 'value': 0} and
+ * get grouped together into an objects like {'width': 5, 'value': 0} and
  * then put into an array that is returned.
  */
 barcode.reader.detector.prototype.group_sequence_ = function(sequence) {
-  var current = {'value': sequence[0], 'length': 0};
+  var current = {'value': sequence[0], 'width': 0};
   var groups = [];
 
   for(var i = 0; i < sequence.length; ++i) {
     if(sequence[i] !== current.value) {
       groups.push(current);
-      current = {'value': sequence[i], 'length': 0};
+      current = {'value': sequence[i], 'width': 0};
     }
-    current.length++;
+    current.width++;
   }
   groups.push(current);
 
@@ -273,97 +272,4 @@ barcode.reader.detector.prototype.group_sequence_ = function(sequence) {
  */
 barcode.reader.detector.prototype.get_sequences = function() {
   return this.sequences_;
-}
-
-
-/**
- * Determine an average number of pixels per byte from a set of known
- * byte-length pixel sequences.
- */
-barcode.reader.detector.prototype.get_average_pixels_per_byte_ = function(expected_sequence, actual_sequence) {
-  var pixels = 0;
-  var bytes = 0;
-
-  for(var i = 0; i < expected_sequence.length; ++i) {
-    pixels += actual_sequence[i].length;
-    bytes += expected_sequence[i].length;
-  }
-
-  return pixels / bytes;
-}
-
-
-/**
- * Take a line of pixels with a start and stop point and convert it into a
- * binary-encoded version of the barcode data.
- */
-barcode.reader.detector.prototype.get_encoded_ = function(line, start_index, stop_index, pixels_per_byte) {
-  // Group the suspected barcode sequence.
-  var grouped = this.group_sequence_(
-    line.splice(start_index, stop_index - start_index)
-  );
-
-  var encoded = [];
-  for(var i = 0; i < grouped.length; ++i) {
-    var bytes = Math.round(grouped[i].length / pixels_per_byte);
-    for(var j = 0; j < bytes; ++j) {
-      encoded.push(grouped[i].value);
-    }
-  }
-
-  // debug draw encoded
-  this.context_.fillStyle = 'rgb(255, 255, 255)';
-  this.context_.fillRect(0, Math.round(this.canvas_.height / 2) - 10, this.canvas_.width, 10);
-  for(var i = 0; i < encoded.length; i++) {
-
-    if(encoded[i] === 1) {
-      this.context_.fillStyle = 'rgb(0, 0, 255)';
-    }
-    else {
-      this.context_.fillStyle = 'rgb(255, 255, 255)';
-    }
-    this.context_.fillRect(start_index + (i * pixels_per_byte), Math.round(this.canvas_.height / 2) - 10, pixels_per_byte, 10);
-
-  }
-
-
-  return encoded;
-}
-
-
-// Nick's version
-barcode.reader.detector.prototype.get_encoded_2_ = function(line, start_index, stop_index, pixels_per_byte) {
-  var encoded = [];
-  var average = 0;
-  var chunk_size = Math.round((stop_index - start_index) / barcode.ean13.bytes);
-  for(var i = 0; i < barcode.ean13.bytes; i++) {
-    var start = start_index + (i * chunk_size);
-    for(var j = start; j < start + chunk_size; j++) {
-      average += line[j];
-    }
-    average = Math.round(average / chunk_size);
-    encoded.push(average);
-    average = 0;
-
-    this.context_.fillStyle = (i % 2 === 0) ? 'rgb(255, 0, 0)' : 'rgb(127, 0, 0)';
-    this.context_.fillRect(start, Math.round(this.canvas_.height / 2) - 20, chunk_size, 10);
-  }
-
-  // debug draw encoded
-  this.context_.fillStyle = 'rgb(255, 255, 255)';
-  this.context_.fillRect(0, Math.round(this.canvas_.height / 2) - 10, this.canvas_.width, 10);
-  for(var i = 0; i < encoded.length; i++) {
-
-    if(encoded[i] === 1) {
-      this.context_.fillStyle = 'rgb(0, 0, 255)';
-    }
-    else {
-      this.context_.fillStyle = 'rgb(255, 255, 255)';
-    }
-    this.context_.fillRect(start_index + (i * chunk_size), Math.round(this.canvas_.height / 2) - 10, chunk_size, 10);
-
-  }
-
-
-  return encoded;
 }

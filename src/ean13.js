@@ -87,9 +87,9 @@ barcode.ean13.encoding_ = {
 };
 
 
-barcode.ean13.start = [1, 0, 1];
-barcode.ean13.intermediate = [0, 1, 0, 1, 0];
-barcode.ean13.stop = [1, 0, 1];
+barcode.ean13.start_sequence = [1, 0, 1];
+barcode.ean13.intermediate_sequence = [0, 1, 0, 1, 0];
+barcode.ean13.stop_sequence = [1, 0, 1];
 barcode.ean13.bytes = 95;
 
 /**
@@ -99,9 +99,9 @@ barcode.ean13.bytes = 95;
  */
 barcode.ean13.encode = function() {
   // Hardcoded segments
-  var start = barcode.ean13.start;
-  var intermediate = barcode.ean13.intermediate;
-  var stop = barcode.ean13.stop;
+  var start = barcode.ean13.start_sequence;
+  var intermediate = barcode.ean13.intermediate_sequence;
+  var stop = barcode.ean13.stop_sequence;
 
   // Grab the data we're going to encode.
   var data = this.data_;
@@ -136,10 +136,119 @@ barcode.ean13.encode = function() {
 
 /**
  */
-barcode.ean13.decode = function(encoded) {
-  if(encoded.length !== barcode.ean13.bytes) {
-    return [];
+barcode.ean13.decode = function(normalized_grouped_line) {
+  var decoded = [];
+
+  // console.log(normalized_grouped_line);
+
+  var group_sequence = function(sequence) {
+    var current = {'value': sequence[0], 'width': 0};
+    var groups = [];
+
+    for(var i = 0; i < sequence.length; ++i) {
+      if(sequence[i] !== current.value) {
+        groups.push(current);
+        current = {'value': sequence[i], 'width': 0};
+      }
+      current.width++;
+    }
+    groups.push(current);
+
+    return groups;
+  };
+  var get_next_match = function(needle, haystack, best_hay) {
+    // TODO do all of the ean13 encoding operations up front so we don't have
+    // to repeat that work every single time this runs.
+    // console.log(needle);
+    // console.log(haystack);
+    best_hay = best_hay || null;
+    // if(best_hay) {
+    //   console.log('starting with best_hay');
+    //   console.log(best_hay);
+    // }
+    for(var value in haystack) {
+      var hay = group_sequence(haystack[value]);
+      var error = 0;
+      for(var i = 0; i < hay.length; ++i) {
+        error += Math.abs(hay[i].width - needle[i].width);
+      }
+      if(best_hay === null || error < best_hay.error) {
+        best_hay = {
+          'value': value,
+          'error': error,
+          'count': hay.length
+        };
+      }
+      // console.log(value);
+    }
+    // console.log(best_hay);
+
+
+    return best_hay;
+  };
+
+
+  // Throw away the start sequence, we know it's there.
+  normalized_grouped_line.splice(0, group_sequence(barcode.ean13.start_sequence).length);
+
+  for(var i = 0; i < 6; ++i) {
+    var best_hay = get_next_match(normalized_grouped_line, barcode.ean13.encoding_['1b'][0]);
+    best_hay = get_next_match(normalized_grouped_line, barcode.ean13.encoding_['1b'][1], best_hay);
+    // console.log(best_hay);
+    if(best_hay.error > 2) {
+      return decoded;
+    }
+    decoded.push(best_hay.value);
+    normalized_grouped_line.splice(0, best_hay.count);
   }
+
+  // Throw away the intermediate sequence, we know it's there.
+  normalized_grouped_line.splice(0, group_sequence(barcode.ean13.intermediate_sequence).length);
+
+  for(var i = 0; i < 6; ++i) {
+    var best_hay = get_next_match(normalized_grouped_line, barcode.ean13.encoding_['2']);
+    // console.log(best_hay);
+    if(best_hay.error > 2) {
+      return decoded;
+    }
+    decoded.push(best_hay.value);
+    normalized_grouped_line.splice(0, best_hay.count);
+  }
+
+  return decoded;
+
+  // get_next_match(normalized_grouped_line, barcode.ean13.encoding_['1b'][1]);
+
+  // First 6 digits.
+  // for(var i = 0; i < 6; ++i) {
+  //   for(var b = 0; b < 1; ++b) {
+
+  //   }
+  // }
+
+  // for(var i = 0; i < 6; ++i) {
+  //   var encoded_digit = encoded.splice(0, 7);
+  //   for(var digit in barcode.ean13.encoding_['1b'][0]) {
+  //     if(compare(encoded_digit, barcode.ean13.encoding_['1b'][0][digit]) === true) {
+  //       decoded.push(digit);
+  //       continue;
+  //     }
+  //   }
+  //   for(var digit in barcode.ean13.encoding_['1b'][1]) {
+  //     if(compare(encoded_digit, barcode.ean13.encoding_['1b'][1][digit]) === true) {
+  //       decoded.push(digit);
+  //       continue;
+  //     }
+  //   }
+  // }
+
+
+
+  return false;
+
+  // if(encoded.length !== barcode.ean13.bytes) {
+    // return [];
+  // }
 
   // console.log(encoded);
   // debugger;
@@ -157,11 +266,7 @@ barcode.ean13.decode = function(encoded) {
     // return true;
   }
 
-  var decode_digit = function(encoded_digit, encoding) {
-    for(var i = 0; i < encoding.length; ++i) {
 
-    }
-  }
 
   var start = encoded.splice(0, 3);
   // console.log(start);
