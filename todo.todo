@@ -1,2 +1,2 @@
- ☐ Support inverted barcodes
- ☐ Better bounds detection or multiple attempts on different detected bounds. Ex: ISBN codes can be read but the extra part of the code screws them up. Or codes scanned further away with additional content sometimes gets bounds that are too large.
+ ☐ Static mode vs live mode - make more of an effort to read static barcodes instead of just relying on multiple frames of a live image to read a barcode
+ ☐ Barcode generation
