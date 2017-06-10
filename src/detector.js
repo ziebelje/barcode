@@ -34,7 +34,11 @@ barcode.detector.prototype.detect = function(collapsed_image_data, symbology) {
 
   // Get the boundary information for the barcode based on the begin/end
   // sequences.
-  var bounds = this.find_bounds_(this.begin_sequences_, this.end_sequences_, symbology);
+  var bounds = this.find_bounds_(
+    this.begin_sequences_,
+    this.end_sequences_,
+    symbology
+  );
   var result = [];
   for (var i = 0; i < bounds.length; i++) {
     // Group the detected barcode pixel data together and also splice out the
@@ -43,7 +47,6 @@ barcode.detector.prototype.detect = function(collapsed_image_data, symbology) {
       collapsed_image_data.slice(
         bounds[i].start_pixel,
         bounds[i].stop_pixel
-        // bounds[i].stop_pixel - bounds[i].start_pixel
       )
     );
 
@@ -52,11 +55,6 @@ barcode.detector.prototype.detect = function(collapsed_image_data, symbology) {
       'data': bars,
       'symbology': symbology
     });
-
-    // result = {
-    //   'data': bars,
-    //   'symbology': symbology
-    // };
   }
 
   var time_end = performance.now();
@@ -71,11 +69,6 @@ barcode.detector.prototype.detect = function(collapsed_image_data, symbology) {
  * wide.
  *
  * The entire sequence scan is done with a single pass across the line.
- *
- * TODO: This can be improved by allowing an array of sequences as it's easily
- * possible to find an arbitrary number of sequences in a single pass.
- * Currently this would take 2 passes to find all the start and all the stop
- * sequences. Probably better things to optimize first.
  *
  * @param {Array.<number>} line The line to look in.
  * @param {Array.<number>} sequence The sequence to find.
@@ -169,13 +162,16 @@ barcode.detector.prototype.find_sequences_ = function(line, sequence) {
 };
 
 /**
- * Given a set of possible start sequences and possible stop sequences, find the
- * pair of start/stop sequences that best seems to capture the barcode and
- * return boundary information.
+ * Given a set of possible start sequences and possible stop sequences, find
+ * all pairs of start/stop sequences and order them by best fit. Best fit is
+ * defined as the group of sequences that is closest to the expected width of
+ * the barcode. The expected width of the barcode is determined by looking at
+ * the size of the bars and, knowing how many bits are in the final barcode,
+ * guessing how wide it should be.
  *
- * TODO: This was some stuff about determing about which stop sequence is the
- * right distance away. Revisit this. For now, just picking the longest match
- * and calling it good.
+ * This isn't perfect because the bounds are found with start/stop sequences
+ * that are very short and thus there's not a lot of data to extrapolate the
+ * width from.
  *
  * @param {Array.<Array.<Object>>} begin_sequences
  * @param {Array.<Array.<Object>>} end_sequences
@@ -184,52 +180,42 @@ barcode.detector.prototype.find_sequences_ = function(line, sequence) {
  * @return {Object}
  */
 barcode.detector.prototype.find_bounds_ = function(
-  begin_sequences, end_sequences, symbology
+  begin_sequences,
+  end_sequences,
+  symbology
 ) {
-
-/*  var bounds = null;
-  for (var i = 0; i < begin_sequences.length; ++i) {
-    for (var j = 0; j < end_sequences.length; ++j) {
-      var start_pixel = begin_sequences[i][0].start_pixel;
-      var stop_pixel = end_sequences[j][end_sequences[j].length - 1].stop_pixel;
-      var width = stop_pixel - start_pixel;
-
-      if (bounds === null || width > bounds.width) {
-        bounds = {
-          'start_pixel': start_pixel,
-          'stop_pixel': stop_pixel,
-          'width': width
-        };
-      }
-    }
-  }
-
-  console.log(bounds);
-  return [bounds];*/
-
-  // var bounds = null;
-
-  // console.log(begin_sequences);
-  // return;
+  // TODO: Exclude bounds where the relative widths of the matches differ. Ex:
+  // 1, 0, 1   and 11, 00, 11? Maybe...11, 0, 1 might still be valid though
+  // because it just read wrong.
 
   // Get all combinations of start/stop sequences
   var bounds_combinations = [];
   for (var i = 0; i < begin_sequences.length; i++) {
-    var begin_sequence_start_pixel = begin_sequences[i][0].start_pixel;
-    var begin_sequence_stop_pixel = begin_sequences[i][begin_sequences[i].length - 1].stop_pixel;
-    var begin_sequence_width = begin_sequence_stop_pixel - begin_sequence_start_pixel;
+    var begin_sequence_start_pixel =
+      begin_sequences[i][0].start_pixel;
+    var begin_sequence_stop_pixel =
+      begin_sequences[i][begin_sequences[i].length - 1].stop_pixel;
+    var begin_sequence_width =
+      begin_sequence_stop_pixel - begin_sequence_start_pixel;
+
     for (var j = 0; j < end_sequences.length; j++) {
-      var end_sequence_start_pixel = end_sequences[j][0].start_pixel;
-      var end_sequence_stop_pixel = end_sequences[j][end_sequences[j].length - 1].stop_pixel;
-      var end_sequence_width = end_sequence_stop_pixel - end_sequence_start_pixel;
+      var end_sequence_start_pixel =
+        end_sequences[j][0].start_pixel;
+      var end_sequence_stop_pixel =
+        end_sequences[j][end_sequences[j].length - 1].stop_pixel;
+      var end_sequence_width =
+        end_sequence_stop_pixel - end_sequence_start_pixel;
 
       // Skip when the end bounds is before the start bounds.
       if (end_sequence_start_pixel <= begin_sequence_start_pixel) {
         continue;
       }
 
-      var pixels_per_bit = (begin_sequence_width + end_sequence_width) / (barcode.symbology[symbology].begin_sequence.length + barcode.symbology[symbology].end_sequence.length);
-      // console.log(pixels_per_bit);
+      var pixels_per_bit = (begin_sequence_width + end_sequence_width) /
+        (
+          barcode.symbology[symbology].begin_sequence.length +
+          barcode.symbology[symbology].end_sequence.length
+        );
 
       // Get the expected pixel width using the widths of the bars in these
       // bounds.
@@ -243,8 +229,6 @@ barcode.detector.prototype.find_bounds_ = function(
       var percentage_difference = Math.abs(expected_width - actual_width) /
         ((expected_width + actual_width) / 2) * 100;
 
-      // console.log(percentage_difference);
-
       // This is pretty generous and will tend to allow a lot of bounds. The
       // main issue is that calculating pixels_per_bit with such a small sample
       // size (just the begin/end sequences) ends up being pretty inaccurate.
@@ -253,11 +237,7 @@ barcode.detector.prototype.find_bounds_ = function(
           'start_pixel': begin_sequence_start_pixel,
           'stop_pixel': end_sequence_stop_pixel,
           'width': actual_width,
-          'percentage_difference': percentage_difference,
-
-          // 'pixels_per_bit': pixels_per_bit,
-          // 'expected_width': expected_width,
-          // 'actual_width': actual_width,
+          'percentage_difference': percentage_difference
         });
       }
     }
@@ -265,49 +245,9 @@ barcode.detector.prototype.find_bounds_ = function(
 
   // Sort the combinations with the best one first.
   bounds_combinations.sort(function(a, b) {
-    return Math.abs(a.percentage_difference) - Math.abs(b.percentage_difference);
+    return Math.abs(a.percentage_difference) -
+      Math.abs(b.percentage_difference);
   });
 
-  // console.log(bounds_combinations);
-
-  // console.log(bounds_combinations[0]);
-  // return bounds_combinations[0];
   return bounds_combinations;
-
-  // return;
-  // console.log(bounds_combinations); return;
-
-
-
-  /**
-   * I believe what I need to do here is look at the pixel width of every pair
-   * of begin/end sequences. Knowing how many bits make up the sequence and
-   * how long the barcode is I can get an estimated length in pixels for the
-   * actual barcode. Simply pick the best match. Probably also go ahead and
-   * sort the resultant bounds by how far off they are so I can try them until
-   * they are expended or a match is found. Make sure to throw away really bad
-   * matches. Note: Being more liberal on the bounds detection will make this
-   * slower.
-   *
-   * PS also document the ean13 decoder better. :)
-   */
-
-
-/*  for (var i = 0; i < begin_sequences.length; ++i) {
-    for (var j = 0; j < end_sequences.length; ++j) {
-      var start_pixel = begin_sequences[i][0].start_pixel;
-      var stop_pixel = end_sequences[j][end_sequences[j].length - 1].stop_pixel;
-      var width = stop_pixel - start_pixel;
-
-      if (bounds === null || width > bounds.width) {
-        bounds = {
-          'start_pixel': start_pixel,
-          'stop_pixel': stop_pixel,
-          'width': width
-        };
-      }
-    }
-  }
-
-  return bounds;*/
 };

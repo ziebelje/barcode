@@ -1,9 +1,7 @@
 /**
  * Decodes processed image data.
  */
-barcode.decoder = function() {
-  this.time_ = 0;
-};
+barcode.decoder = function() {};
 
 /**
  * Scales the widths of the full bars down to match the ideal case of "one
@@ -11,7 +9,7 @@ barcode.decoder = function() {
  * threebars each with a width of 20px in the actual image. This will scale
  * thosewidths down to 1px each (more or less).
  *
- * @param {Array.<Objec>} bars
+ * @param {Array.<Object>} bars
  * @param {number} bits
  *
  * @return {Array.<Object>}
@@ -31,5 +29,3 @@ barcode.decoder.prototype.get_normalized_bars_ = function(bars, bits) {
 
   return bars;
 };
-
-barcode.decoder.prototype.foo = 'bar';

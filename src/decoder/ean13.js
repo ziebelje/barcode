@@ -1,7 +1,5 @@
 /**
  * EAN-13 decoder.
- *
- * @link http://barcode-coder.com/en/ean-13-specification-102.html
  */
 barcode.decoder.ean13 = function() {
   barcode.decoder.apply(this, arguments);
@@ -9,11 +7,11 @@ barcode.decoder.ean13 = function() {
 barcode.extend(barcode.decoder.ean13, barcode.decoder);
 
 /**
- * Decode.
+ * Do some common stuff, then call the decode_ helper function.
  *
  * @param {Array.<Ojbect>} bars
  *
- * @return {[type]} [description]
+ * @return {string?} The decoded barcode or null if it failed.
  */
 barcode.decoder.ean13.prototype.decode = function(bars) {
   var time_start = performance.now();
@@ -29,12 +27,22 @@ barcode.decoder.ean13.prototype.decode = function(bars) {
     barcode.symbology.ean13.bits
   );
 
+  var decoded = this.decode_(normalized_bars);
+
   var time_end = performance.now();
   this.time_ = time_end - time_start;
 
-  return this.decode_(normalized_bars);
+  return decoded;
 };
 
+/**
+ * Helper decode function. This mostly exists to allow for trivial secondary
+ * attempts at reading a barcode (for now just in the case of inverted codes).
+ *
+ * @param {Array.<Object>} normalized_bars
+ *
+ * @return {string?} The decoded barcode or null if it failed.
+ */
 barcode.decoder.ean13.prototype.decode_ = function(normalized_bars) {
   // Decode the first 6 digits.
   var part_1 = this.decode_part_1_(normalized_bars);
@@ -48,19 +56,12 @@ barcode.decoder.ean13.prototype.decode_ = function(normalized_bars) {
     return this.decode_(normalized_bars.reverse());
   }
 
-  // TODO: *MAYBE* add something in here to attempt to auto-correct any misreads
-  // from the first 6 digits. hqdefault.jpg fails the decoder in the static test
-  // because the 6th encoded digit reads as a 1b[0][2] instead of 1b[1][0].
-  // Adding this additional logic to the decoder would probably make that static
-  // image work and maybe some others, but for live images such a problem would
-  // most likely be corrected in the next frame.
-
   // Decode the second 6 digits.
   var part_2 = this.decode_part_2_(normalized_bars);
 
   var decoded = '';
 
-  // Now figure out what the first digit is supposed to be.
+  // Figure out what the first digit is supposed to be.
   for (var first_digit in barcode.symbology.ean13.encoding['1a']) {
     if (part_1.first_digit_encoding === barcode.symbology.ean13.encoding['1a'][first_digit].join('')) {
       decoded += first_digit;
@@ -73,12 +74,12 @@ barcode.decoder.ean13.prototype.decode_ = function(normalized_bars) {
     return null;
   }
 
+  // Add the rest of the values.
   decoded += part_1.decoded;
   decoded += part_2.decoded;
 
   // Validate the results of the scan with a checksum.
   var decoded_check_digit = parseInt(decoded[decoded.length - 1], 10);
-  // console.log('checksum=' + barcode.symbology.ean13.checksum(decoded));
   var calculated_check_digit = barcode.symbology.ean13.checksum(decoded);
   if (decoded_check_digit === calculated_check_digit) {
     return decoded;
@@ -87,6 +88,13 @@ barcode.decoder.ean13.prototype.decode_ = function(normalized_bars) {
   return null;
 };
 
+/**
+ * Decode digits 2-7 of the barcode.
+ *
+ * @param {Array.<Object>} normalized_bars
+ *
+ * @return {Ojbect} The decoded value and the first digit encoding.
+ */
 barcode.decoder.ean13.prototype.decode_part_1_ = function(normalized_bars) {
   var decoded = '';
   var first_digit_encoding = '';
@@ -118,6 +126,14 @@ barcode.decoder.ean13.prototype.decode_part_1_ = function(normalized_bars) {
   };
 };
 
+/**
+ * Decode digits 8-13 of the barcode.
+ *
+ * @param {Array.<Object>} normalized_bars
+ *
+ * @return {Ojbect} The decoded value. Kept in an object to maintain
+ * consistency with decode_part_1_'s return format.
+ */
 barcode.decoder.ean13.prototype.decode_part_2_ = function(normalized_bars) {
   var decoded = '';
 
@@ -134,8 +150,24 @@ barcode.decoder.ean13.prototype.decode_part_2_ = function(normalized_bars) {
   return {'decoded': decoded};
 };
 
-  // TODO: Optimize by caching a grouped version of the encoding.
-barcode.decoder.ean13.prototype.find_match_ = function(needle, haystack, offset) {
+/**
+ * Given a sequence to find, a barcode encoding table, and an offset, find the
+ * closest match in the table.
+ *
+ * TODO: Optimize by caching a grouped version of the encoding.
+ *
+ * @param {Array.<Object>} needle The normalized bar data.
+ * @param {Array.<number>} haystack The encoding table.
+ * @param {numbe} offset Offset of the normalized bar data to start looking
+ * at.
+ *
+ * @return {Object} Best match data.
+ */
+barcode.decoder.ean13.prototype.find_match_ = function(
+  needle,
+  haystack,
+  offset
+) {
   var best_match;
 
   for (var value in haystack) {

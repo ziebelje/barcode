@@ -1,5 +1,13 @@
+/**
+ * EAN-13 symbology.
+ */
 barcode.symbology.ean13 = {};
 
+/**
+ * Encoding tables.
+ *
+ * @type {Object}
+ */
 barcode.symbology.ean13.encoding = {
   '1a': {
     '0': [0, 0, 0, 0, 0, 0],
@@ -53,8 +61,25 @@ barcode.symbology.ean13.encoding = {
   }
 };
 
+/**
+ * Begin sequence of this barcode symbology.
+ *
+ * @type {Array.<number>}
+ */
 barcode.symbology.ean13.begin_sequence = [1, 0, 1];
+
+/**
+ * Intermediate sequence of this barcode symbology.
+ *
+ * @type {Array.<number>}
+ */
 barcode.symbology.ean13.intermediate_sequence = [0, 1, 0, 1, 0];
+
+/**
+ * End sequence of this barcode symbology.
+ *
+ * @type {Array.<number>}
+ */
 barcode.symbology.ean13.end_sequence = [1, 0, 1];
 
 /**

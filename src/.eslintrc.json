@@ -41,6 +41,10 @@
     "no-trailing-spaces": "warn",
     "object-curly-newline": "warn",
     "no-negated-condition": "off",
+    "no-empty-function": "off",
+    "no-continue": "off",
+    "max-depth": "warn",
+    "no-warning-comments": "warn",
 
     // Node.js and CommonJS
     "callback-return": "off",

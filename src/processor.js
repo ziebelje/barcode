@@ -3,12 +3,6 @@
  * basically responsible for getting an array of 1's and 0's representing the
  * barcode data. For now the assumption is made that the barcode is in the
  * center of the image. No attempt is made to look around the image for it.
- *
- * @link http://book.realworldhaskell.org/read/barcode-recognition.html
- * @link http://www.google.com/patents/US20120091204
- * @link https://code.google.com/p/jjil/wiki/FindingTheBarcode
- * @link http://www.ijeset.com/media/0001/8I4-IJESET410-ROBUST-BARCODE.pdf
- * @link http://www.math.tau.ac.il/~turkel/notes/otsu.pdf
  */
 barcode.processor = function() {};
 

@@ -26,7 +26,7 @@ barcode.reader = function() {
  *
  * @type {Number}
  */
-barcode.reader.prototype.interval_ = 50;
+barcode.reader.prototype.interval_ = 100;
 
 /**
  * Sets the input source.
