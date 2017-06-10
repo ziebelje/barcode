@@ -3,10 +3,14 @@
   <head>
     <title>Live</title>
     <script type="text/javascript" src="../src/barcode.js"></script>
-    <script type="text/javascript" src="../src/ean13.js"></script>
+    <script type="text/javascript" src="../src/symbology.js"></script>
+    <script type="text/javascript" src="../src/symbology/ean13.js"></script>
     <script type="text/javascript" src="../src/reader.js"></script>
-    <script type="text/javascript" src="../src/reader/processor.js"></script>
-    <script type="text/javascript" src="../src/reader/detector.js"></script>
+    <script type="text/javascript" src="../src/processor.js"></script>
+    <script type="text/javascript" src="../src/detector.js"></script>
+    <script type="text/javascript" src="../src/decoder.js"></script>
+    <script type="text/javascript" src="../src/decoder/ean13.js"></script>
+    <script type="text/javascript" src="../src/debugger.js"></script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
   </head>
@@ -19,38 +23,57 @@
   <script type="text/javascript">
     // https://www.simpl.info/getusermedia/sources/index.html
     var get_video_sources = function(callback) {
-      if (typeof MediaStreamTrack !== 'undefined') {
-        MediaStreamTrack.getSources(function(sources) {
-          var video_sources = [];
-          for(var i = 0; i < sources.length; ++i) {
-            if(sources[i].kind === 'video') {
-              video_sources.push(sources[i]);
-            }
+
+      var video_sources = [];
+      navigator.mediaDevices.enumerateDevices()
+      .then(function(devices) {
+        devices.forEach(function(device) {
+          if(device.kind === 'videoinput') {
+            // alert(JSON.stringify(device));
+            console.log(device);
+            video_sources.push(device);
           }
-          callback(video_sources);
+          // console.log(device.kind + ": " + device.label +
+                      // " id = " + device.deviceId);
         });
-      }
-      else {
-        callback([]);
-      }
+        callback(video_sources);
+      })
+      .catch(function(err) {
+        console.log(err.name + ": " + err.message);
+      });
+
+      // if (typeof MediaStreamTrack !== 'undefined') {
+        // navigator.MediaDevice.enumerateDevices(function(sources) {
+        // MediaStreamTrack.getSources(function(sources) {
+        //   var video_sources = [];
+        //   for(var i = 0; i < sources.length; ++i) {
+        //     if(sources[i].kind === 'video') {
+        //       video_sources.push(sources[i]);
+        //     }
+        //   }
+        //   callback(video_sources);
+        // });
+      // }
+      // else {
+        // callback([]);
+      // }
     }
 
     get_video_sources(function(video_sources) {
       // alert(JSON.stringify(video_sources));
-      var source_id = video_sources[0].id;
+      var source_id = video_sources[0].deviceId;
       for(var i = 0; i < video_sources.length; i++) {
-        if(video_sources[i].facing === 'environment') {
-          source_id = video_sources[i].id;
+        if(i == 1) {
+        // if(video_sources[i].label === 'front') {
+          source_id = video_sources[i].deviceId;
         }
       }
       // alert(source_id);
 
       var video = document.getElementById('video');
-      var barcode_reader = new barcode.reader({
-        'source': video,
-        'interval': 100,
-        'symbology': 'ean13'
-      });
+      var barcode_reader = new barcode.reader()
+        .set_source(video)
+        .set_symbology('ean13');
 
 
 
@@ -111,7 +134,14 @@
           // });
 
 
-          barcode_reader.start();
+          barcode_reader.start(function(result) {
+            barcode_reader.debug('draw_binarized');
+            barcode_reader.debug('draw_bounds');
+            barcode_reader.debug('draw_scan_line');
+            barcode_reader.debug('draw_success_line');
+          });
+
+          // barcode_reader.start();
 
           var barcode_reader_canvas = barcode_reader.get_canvas();
           document.querySelector('body').appendChild(barcode_reader_canvas);

@@ -1,118 +1,119 @@
 <!doctype html>
 <html>
   <head>
-    <title>Live</title>
+    <title>Barcode Live Test</title>
     <script type="text/javascript" src="../src/barcode.js"></script>
-    <script type="text/javascript" src="../src/ean13.js"></script>
+    <script type="text/javascript" src="../src/symbology.js"></script>
+    <script type="text/javascript" src="../src/symbology/ean13.js"></script>
     <script type="text/javascript" src="../src/reader.js"></script>
-    <script type="text/javascript" src="../src/reader/processor.js"></script>
-    <script type="text/javascript" src="../src/reader/detector.js"></script>
-
+    <script type="text/javascript" src="../src/processor.js"></script>
+    <script type="text/javascript" src="../src/detector.js"></script>
+    <script type="text/javascript" src="../src/decoder.js"></script>
+    <script type="text/javascript" src="../src/decoder/ean13.js"></script>
+    <script type="text/javascript" src="../src/debugger.js"></script>
   </head>
   <body>
-    <!--<input type="button" id="start" value="Start"/>-->
-    <!--<input type="button" id="stop" value="Stop"/>-->
+  <div>
     <table>
       <tr>
-        <td><strong>Threshold</strong></td>
-        <td><label><input type="text" maxwidth="3" disabled="disabled" style="width: 50px" id="threshold"/></td>
+        <td id="video_container">
+          <video id="video" autoplay="autoplay" style="display: none;"></video>
+        </td>
+        <td valign="top">
+          <div id="result">test</div>
+        </td>
       </tr>
     </table>
-    <canvas id="canvas"></canvas>
-    <video id="video" autoplay="autoplay"></video>
-  </body>
+</div>
+    <script type="text/javascript">
+      var streaming = false;
+      var video = document.getElementById('video');
 
-  <script type="text/javascript">
-    // document.getElementById('start').addEventListener('click', function() {
-    //   reader_video.start();
-    // });
+      navigator.getMedia = (
+        navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia
+      );
 
-    // document.getElementById('stop').addEventListener('click', function() {
-    //   reader_video.stop();
-    // });
-
-    if(false) {
-      var canvas = document.getElementById('canvas');
-      canvas.style.border = "1px solid blue";
-      var context = canvas.getContext('2d');
-      var image = new Image();
-      // image.src = 'img/test1.png';
-      image.src = 'img/ean13.svg';
-      image.onload = function(){
-        canvas.width = image.width;
-        canvas.height = image.height;
-
-        context.drawImage(image, 0, 0);
-
-        var reader_canvas = new barcode.reader({
-          'source': canvas,
-          'symbology': 'ean13'
-        });
-
-        reader_canvas.start();
-      };
-
-    }
-
-    var streaming = false;
-    var video = document.getElementById('video');
-
-    navigator.getMedia = (
-      navigator.getUserMedia ||
-      navigator.webkitGetUserMedia ||
-      navigator.mozGetUserMedia ||
-      navigator.msGetUserMedia
-    );
-
-    navigator.getMedia(
-      {
-        'video': {
-          "mandatory": {
-             "minWidth": "320",
-             "minHeight": "180"
+      navigator.getMedia(
+        {
+          'video': {
+            'mandatory': {
+               'minWidth': '320',
+               'minHeight': '180'
+            },
+            optional: [
+              { frameRate: 10 },
+              { facingMode: 'environment' }
+            ]
           },
-          optional: [
-            { frameRate: 10 },
-            { facingMode: "environment" }
-          ]
+          'audio': false
         },
-        'audio': false
-      },
-      function(stream) {
-        if (navigator.mozGetUserMedia) {
-          video.mozSrcObject = stream;
-        } else {
-          var vendorURL = window.URL || window.webkitURL;
-          video.src = vendorURL.createObjectURL(stream);
+        function(stream) {
+          if (navigator.mozGetUserMedia) {
+            video.mozSrcObject = stream;
+          } else {
+            var vendorURL = window.URL || window.webkitURL;
+            video.src = vendorURL.createObjectURL(stream);
+          }
+          video.play();
+        },
+        function(err) {
+          console.log('An error occured! ' + err);
         }
-        video.play();
-      },
-      function(err) {
-        console.log("An error occured! " + err);
-      }
-    );
+      );
 
-    video.addEventListener(
-      'canplay',
-      function(ev) {
-        if (!streaming) {
-          streaming = true;
+      video.addEventListener(
+        'canplay',
+        function(ev) {
+          if (!streaming) {
+            streaming = true;
 
-          // console.log('live.html w=' + video.videoWidth + ' h=' + video.videoHeight);
+            var barcode_reader = new barcode.reader()
+              .set_source(video)
+              .set_symbology('ean13');
 
-          var reader = new barcode.reader({
-            'source': video,
-            'interval': 100, // ms
-            // 'threshold': 255,
-            'symbology': 'ean13'
-          });
+            var barcode_canvas = barcode_reader.get_canvas();
+            barcode_canvas.width = 640;
+            barcode_canvas.height = 360;
+            // barcode_canvas.style.position = 'absolute';
+            // barcode_canvas.style.top = '0';
+            // barcode_canvas.style.left = '0';
+            document.getElementById('video_container').appendChild(barcode_canvas);
 
-          reader.start();
-        }
-      },
-      false
-    );
+            barcode_reader.start(function(result) {
+              if(result !== null) {
+                document.getElementById('result').innerHTML = result;
+              }
+              else {
+                document.getElementById('result').innerHTML = '&nbsp;';
+              }
 
-  </script>
+              document.getElementById('result').innerHTML += '<br/>'
+              document.getElementById('result').innerHTML += JSON.stringify(
+                barcode_reader.debug('get_performance'),
+                null,
+                2
+              ).replace(/\n/g, '<br/>').replace(/ /g, '&nbsp;');
 
+              // console.clear();
+              // console.log(JSON.stringify(
+              //   barcode_reader.debug('get_performance'),
+              //   null,
+              //   2
+              // ).replace(/\n/g, '<br/>'));
+
+              barcode_reader.debug('draw_binarized');
+              barcode_reader.debug('draw_bounds');
+              barcode_reader.debug('draw_scan_line');
+              barcode_reader.debug('draw_success_line');
+            });
+          }
+        },
+        false
+      );
+
+    </script>
+  </body>
 </html>
